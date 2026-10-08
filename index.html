@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#292f32" />
+    <meta name="description" content="Operasyon Merkezi: SMS ve XML kontrolleri, birim dönüşümleri ve ücret hesaplamaları için ortak çalışma alanı." />
+    <title>SMS Karşılaştırma · Operasyon Merkezi</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%2338645b'/%3E%3Ctext x='20' y='25' text-anchor='middle' font-family='Arial,sans-serif' font-size='15' font-weight='600' fill='white'%3EOM%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="sms-engine.js" defer></script>
+    <script src="xml-engine.js" defer></script>
+    <script src="converter-engine.js" defer></script>
+    <script src="converter-ui.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon-definitions" aria-hidden="true">
+      <symbol id="i-message" viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-8l-5 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/></symbol>
+      <symbol id="i-compare" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/><path d="M6 9h1m-1 4h1m10-4h1m-1 4h1"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a5 5 0 0 0-4 1 5 5 0 0 0-4-1H3Z"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4m.1 3h.01"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Zm7-1v4m-2-2h4"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+      <symbol id="i-paste" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H5v16h14V5h-3M8 11h8m-8 4h6"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+      <symbol id="i-swap" viewBox="0 0 24 24"><path d="M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Zm0 6v5m0 3h.01"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+      <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a3 3 0 0 1-6 0Zm-14 0 3-8 3 8a3 3 0 0 1-6 0ZM12 3v18M7 7h10"/></symbol>
+      <symbol id="i-calculator" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/></symbol>
+    </svg>
+
+    <a class="skip-link" href="#main">İçeriğe geç</a>
+    <aside id="sidebar" class="sidebar" aria-label="Ana menü">
+      <a class="brand" href="#sms-view" data-view-link="sms" aria-label="Operasyon Merkezi ana sayfa" title="Operasyon Merkezi"><span class="brand-mark" aria-hidden="true">OM</span><span class="brand-name">Operasyon<strong>Merkezi</strong></span></a>
+      <div class="workspace-label">ÇALIŞMA ARAÇLARI</div>
+      <nav class="navigation" aria-label="Çalışma araçları">
+        <a class="nav-item active" href="#sms-view" aria-current="page" aria-label="SMS karşılaştırma" title="SMS karşılaştırma" data-view-link="sms"><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg><span>SMS karşılaştırma</span><span class="nav-active-dot"></span></a>
+        <a class="nav-item" href="#xml-view" aria-label="XML karşılaştırma" title="XML karşılaştırma" data-view-link="xml"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg><span>XML karşılaştırma</span><span class="nav-active-dot"></span></a>
+        <a class="nav-item" href="#converter-view" aria-label="Ölçü dönüştürücü" title="Ölçü dönüştürücü" data-view-link="converter"><svg class="icon" aria-hidden="true"><use href="#i-scale"/></svg><span>Ölçü dönüştürücü</span><span class="nav-active-dot"></span></a>
+        <a class="nav-item" href="#fee-view" aria-label="Ücret hesaplama" title="Ücret hesaplama" data-view-link="fee"><svg class="icon" aria-hidden="true"><use href="#i-calculator"/></svg><span>Ücret hesaplama</span><span class="nav-active-dot"></span></a>
+      </nav>
+      <div class="workspace-label support-label">KAYNAKLAR</div>
+      <button class="nav-item" data-dialog="guide" aria-label="Karakter rehberi" title="Karakter rehberi"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span>Karakter rehberi</span></button>
+      <div class="sidebar-bottom">
+        <div class="privacy-status" title="Girdileriniz sunucuya gönderilmez"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Yerel işlem<strong>Veriler cihazınızda kalır</strong></span><span class="status-dot"></span></div>
+        <button class="nav-item help-link" data-dialog="help" aria-label="SMS karşılaştırma yardımı" title="SMS karşılaştırma yardımı"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg><span>Yardım</span><svg class="icon small" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        <div class="sidebar-footer"><span>Operasyon Merkezi</span><span>v1.0</span></div>
+      </div>
+    </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Menüyü daralt" title="Menüyü daralt"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+
+    <div class="app-shell">
+      <header class="topbar"><div class="breadcrumb"><span class="desktop-breadcrumb">Operasyon Merkezi</span><svg class="icon small desktop-breadcrumb"><use href="#i-chevron"/></svg><span>SMS Karşılaştırma</span></div><div class="topbar-right"><span class="local-status"><span class="status-dot"></span> Yerel çalışma alanı</span></div></header>
+      <main id="main" class="main-content" tabindex="-1">
+        <section id="sms-view" class="workspace-view active" data-view="sms">
+        <section class="page-heading"><div><div class="eyebrow">METİN KONTROLÜ</div><h1>SMS karşılaştırma</h1></div><div class="heading-actions"><button id="load-example" class="button button-secondary"><svg class="icon"><use href="#i-spark"/></svg>Örnek yükle</button><button id="export-report" class="button button-primary" disabled><svg class="icon"><use href="#i-download"/></svg>Rapor indir</button></div></section>
+
+        <section class="summary-grid" aria-label="Analiz özeti" aria-live="polite" aria-atomic="true">
+          <article class="summary-card"><div class="summary-icon lavender" id="equality-icon"><svg class="icon"><use href="#i-compare"/></svg></div><div class="summary-body"><span class="summary-label">EŞİTLİK DURUMU</span><strong id="equality-title">Karşılaştırmaya hazır</strong><span id="equality-detail" class="summary-detail">Başlamak için iki metin girin</span></div><span class="summary-indicator" id="equality-indicator"></span></article>
+          <article class="summary-card"><div class="summary-icon mint" id="ascii-icon"><svg class="icon"><use href="#i-shield"/></svg></div><div class="summary-body"><span class="summary-label">ASCII UYUMLULUĞU</span><strong id="ascii-title">Kontrol bekleniyor</strong><span id="ascii-detail" class="summary-detail">Her iki metin ayrı ayrı incelenir</span></div></article>
+          <article class="summary-card similarity-card"><div class="summary-icon blue"><svg class="icon"><use href="#i-activity"/></svg></div><div class="summary-body"><span class="summary-label">METİN BENZERLİĞİ</span><div class="similarity-value"><strong id="similarity-title">—</strong><span id="similarity-caption">Henüz hesaplanmadı</span></div><div class="progress-track"><div id="similarity-progress" class="progress-fill"></div></div></div></article>
+        </section>
+
+        <section class="comparison-section" aria-labelledby="comparison-heading">
+          <div class="section-heading"><div class="section-title"><h2 id="comparison-heading">Metin karşılaştırması</h2><span class="live-badge"><span class="status-dot"></span> Canlı analiz</span></div><button id="clear-all" class="text-button" disabled><svg class="icon small"><use href="#i-refresh"/></svg>Tümünü temizle</button></div>
+          <div class="editors-grid">
+            <article class="editor-card" id="left-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge left-letter">A</span><div><label for="left-text">Sol metin</label><span>Referans SMS</span></div></div><div class="editor-actions"><button class="icon-button" data-action="paste" data-side="left" title="Sol metne yapıştır" aria-label="Sol metne yapıştır"><svg class="icon"><use href="#i-paste"/></svg></button><button class="icon-button" data-action="copy" data-side="left" title="Sol metni kopyala" aria-label="Sol metni kopyala" disabled><svg class="icon"><use href="#i-copy"/></svg></button><span class="action-divider"></span><button class="icon-button" data-action="clear" data-side="left" title="Sol metni temizle" aria-label="Sol metni temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface"><div class="editor-highlight" id="left-highlight" aria-hidden="true"></div><textarea id="left-text" class="sms-input" maxlength="10000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="left-stats" placeholder="Referans SMS metni"></textarea></div><div class="editor-status"><span class="encoding-badge" id="left-ascii">ASCII kontrolü bekleniyor</span><span class="input-limit"><span id="left-length">0</span> / 10.000</span></div><div class="editor-stats" id="left-stats"><div><span>Karakter</span><strong id="left-characters">0</strong></div><div><span>Kodlama<svg class="icon micro" aria-hidden="true"><use href="#i-info"/></svg></span><strong id="left-encoding">—</strong></div><div><span>SMS adedi</span><strong id="left-segments">—</strong></div><div><span>UTF-8 bayt</span><strong id="left-bytes">0</strong></div></div></article>
+
+            <button id="swap-texts" class="swap-button" title="Metinlerin yerini değiştir" aria-label="Sol ve sağ metnin yerini değiştir" disabled><svg class="icon"><use href="#i-swap"/></svg></button>
+
+            <article class="editor-card" id="right-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge right-letter">B</span><div><label for="right-text">Sağ metin</label><span>Karşılaştırılacak SMS</span></div></div><div class="editor-actions"><button class="icon-button" data-action="paste" data-side="right" title="Sağ metne yapıştır" aria-label="Sağ metne yapıştır"><svg class="icon"><use href="#i-paste"/></svg></button><button class="icon-button" data-action="copy" data-side="right" title="Sağ metni kopyala" aria-label="Sağ metni kopyala" disabled><svg class="icon"><use href="#i-copy"/></svg></button><span class="action-divider"></span><button class="icon-button" data-action="clear" data-side="right" title="Sağ metni temizle" aria-label="Sağ metni temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface"><div class="editor-highlight" id="right-highlight" aria-hidden="true"></div><textarea id="right-text" class="sms-input" maxlength="10000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="right-stats" placeholder="Karşılaştırılacak SMS metni"></textarea></div><div class="editor-status"><span class="encoding-badge" id="right-ascii">ASCII kontrolü bekleniyor</span><span class="input-limit"><span id="right-length">0</span> / 10.000</span></div><div class="editor-stats" id="right-stats"><div><span>Karakter</span><strong id="right-characters">0</strong></div><div><span>Kodlama<svg class="icon micro" aria-hidden="true"><use href="#i-info"/></svg></span><strong id="right-encoding">—</strong></div><div><span>SMS adedi</span><strong id="right-segments">—</strong></div><div><span>UTF-8 bayt</span><strong id="right-bytes">0</strong></div></div></article>
+          </div>
+          <div class="comparison-options"><div class="option-group"><label class="checkbox-label"><input id="highlight-differences" type="checkbox" checked/><span>Farkları vurgula</span></label><span class="options-divider"></span><label class="checkbox-label"><input id="ignore-whitespace" type="checkbox"/><span>Boşlukları yok say</span></label><label class="checkbox-label"><input id="ignore-case" type="checkbox"/><span>Büyük / küçük harfi yok say</span></label></div><span class="highlight-legend"><span class="legend-dot removed"></span>Sol metindeki fark<span class="legend-dot added"></span>Sağ metindeki fark</span></div>
+          <div class="comparison-note" id="comparison-note" hidden></div>
+        </section>
+
+        <section class="analysis-section" aria-labelledby="analysis-heading"><div class="section-heading"><div class="section-title"><h2 id="analysis-heading">Karakter analizi</h2><span id="issue-count" class="count-badge">0</span></div><button class="text-button guide-button" data-dialog="guide">ASCII hakkında<svg class="icon small"><use href="#i-arrow"/></svg></button></div><div class="analysis-card"><div class="analysis-toolbar"><div class="analysis-tabs" role="tablist" aria-label="Karakter türü"><button id="tab-nonascii" class="analysis-tab active" role="tab" aria-selected="true" aria-controls="character-panel" tabindex="0" data-tab="nonascii">ASCII dışı karakterler<span id="nonascii-count">0</span></button><button id="tab-invisible" class="analysis-tab" role="tab" aria-selected="false" aria-controls="character-panel" tabindex="-1" data-tab="invisible">Görünmez / kontrol<span id="invisible-count">0</span></button></div><label class="side-filter"><span class="sr-only">Analiz edilecek metin</span><select id="side-filter"><option value="both">Her iki metin</option><option value="left">Sol metin (A)</option><option value="right">Sağ metin (B)</option></select></label></div><div id="character-panel" role="tabpanel" aria-labelledby="tab-nonascii" tabindex="0"><div id="analysis-empty" class="analysis-empty"><span class="empty-icon"><svg class="icon"><use href="#i-code"/></svg></span><strong id="empty-title">Analiz bekleniyor</strong><p id="empty-detail">Metinlerinizi eklediğinizde ASCII dışı karakterler burada listelenir.</p></div><div id="character-table-wrapper" class="table-wrapper" hidden><table class="character-table"><thead><tr><th>METİN</th><th>KARAKTER</th><th>UNICODE</th><th>KONUM</th><th>AÇIKLAMA</th></tr></thead><tbody id="character-table-body"></tbody></table><div id="table-limit-note" class="table-limit-note" hidden></div></div></div><div class="analysis-footnote"><svg class="icon small"><use href="#i-info"/></svg><span>ASCII uyumluluğu ile SMS kodlaması farklıdır. Türkçe karakterler ASCII dışındadır; SMS hesabı kullanılan alfabeye göre değişir.</span></div></div></section>
+        </section>
+
+        <section id="xml-view" class="workspace-view" data-view="xml" hidden>
+          <section class="page-heading"><div><div class="eyebrow">YAPISAL KONTROL</div><h1>XML karşılaştırma</h1></div><div class="heading-actions"><button id="xml-load-example" class="button button-secondary"><svg class="icon"><use href="#i-spark"/></svg>Örnek yükle</button><button id="xml-export-report" class="button button-primary" disabled><svg class="icon"><use href="#i-download"/></svg>XML raporu indir</button></div></section>
+
+          <section class="summary-grid xml-summary-grid" aria-label="XML analiz ozeti" aria-live="polite" aria-atomic="true">
+            <article class="summary-card"><div class="summary-icon lavender" id="xml-status-icon"><svg class="icon"><use href="#i-file"/></svg></div><div class="summary-body"><span class="summary-label">XML DURUMU</span><strong id="xml-status-title">Karsilastirmaya hazir</strong><span id="xml-status-detail" class="summary-detail">Iki XML dosyasi yukleyin veya metin yapistirin</span></div><span class="summary-indicator" id="xml-status-indicator"></span></article>
+            <article class="summary-card"><div class="summary-icon amber"><svg class="icon"><use href="#i-list"/></svg></div><div class="summary-body"><span class="summary-label">FARK KALEMI</span><strong id="xml-diff-count">0</strong><span id="xml-diff-detail" class="summary-detail">Alan, attribute ve text farklari listelenir</span></div></article>
+            <article class="summary-card similarity-card"><div class="summary-icon blue"><svg class="icon"><use href="#i-activity"/></svg></div><div class="summary-body"><span class="summary-label">YAPISAL BENZERLIK</span><div class="similarity-value"><strong id="xml-similarity-title">-</strong><span id="xml-similarity-caption">Henüz hesaplanmadi</span></div><div class="progress-track"><div id="xml-similarity-progress" class="progress-fill"></div></div></div></article>
+          </section>
+
+          <section class="comparison-section" aria-labelledby="xml-comparison-heading">
+            <div class="section-heading"><div class="section-title"><h2 id="xml-comparison-heading">XML karsilastirmasi</h2><span class="live-badge"><span class="status-dot"></span> Yerel analiz</span></div><button id="xml-clear-all" class="text-button" disabled><svg class="icon small"><use href="#i-refresh"/></svg>Tumunu temizle</button></div>
+            <div class="editors-grid xml-editors-grid">
+              <article class="editor-card" id="xml-left-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge left-letter">A</span><div><label for="xml-left-text">Sol XML</label><span>Referans dosya</span></div></div><div class="editor-actions"><label class="icon-button file-button" title="Sol XML yukle" aria-label="Sol XML yukle"><input id="xml-left-file" type="file" accept=".xml,text/xml,application/xml"/><svg class="icon"><use href="#i-file"/></svg></label><button class="icon-button" data-xml-action="clear" data-xml-side="left" title="Sol XML temizle" aria-label="Sol XML temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface xml-editor-surface"><div class="editor-highlight" id="xml-left-highlight" aria-hidden="true"></div><textarea id="xml-left-text" class="sms-input" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Referans XML dosyasini yukleyin veya buraya yapistirin..."></textarea></div><div class="editor-status"><span class="encoding-badge" id="xml-left-valid">XML bekleniyor</span><span class="input-limit"><span id="xml-left-length">0</span> karakter</span></div></article>
+
+              <button id="xml-swap-texts" class="swap-button" title="XML dosyalarinin yerini degistir" aria-label="Sol ve sag XML'in yerini degistir" disabled><svg class="icon"><use href="#i-swap"/></svg></button>
+
+              <article class="editor-card" id="xml-right-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge right-letter">B</span><div><label for="xml-right-text">Sag XML</label><span>Karsilastirilacak dosya</span></div></div><div class="editor-actions"><label class="icon-button file-button" title="Sag XML yukle" aria-label="Sag XML yukle"><input id="xml-right-file" type="file" accept=".xml,text/xml,application/xml"/><svg class="icon"><use href="#i-file"/></svg></label><button class="icon-button" data-xml-action="clear" data-xml-side="right" title="Sag XML temizle" aria-label="Sag XML temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface xml-editor-surface"><div class="editor-highlight" id="xml-right-highlight" aria-hidden="true"></div><textarea id="xml-right-text" class="sms-input" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Karsilastirilacak XML dosyasini yukleyin veya buraya yapistirin..."></textarea></div><div class="editor-status"><span class="encoding-badge" id="xml-right-valid">XML bekleniyor</span><span class="input-limit"><span id="xml-right-length">0</span> karakter</span></div></article>
+            </div>
+            <div class="comparison-options"><span class="highlight-legend"><span class="legend-dot removed"></span>Soldaki fark<span class="legend-dot added"></span>Sagdaki fark</span></div>
+            <div class="comparison-note" id="xml-comparison-note" hidden></div>
+          </section>
+
+          <section class="analysis-section" aria-labelledby="xml-differences-heading"><div class="section-heading"><div class="section-title"><h2 id="xml-differences-heading">Fark listesi</h2><span id="xml-issue-count" class="count-badge">0</span></div></div><div class="analysis-card"><div class="table-wrapper xml-table-wrapper"><div id="xml-analysis-empty" class="analysis-empty"><span class="empty-icon"><svg class="icon"><use href="#i-list"/></svg></span><strong id="xml-empty-title">XML farklari burada listelenir.</strong><p id="xml-empty-detail">Iki gecerli XML eklendiginde degisen node, attribute ve text degerleri gorunur.</p></div><table id="xml-diff-table" class="character-table xml-diff-table" hidden><thead><tr><th>DURUM</th><th>YOL</th><th>TUR</th><th>SOL DEGER</th><th>SAG DEGER</th></tr></thead><tbody id="xml-diff-table-body"></tbody></table></div><div class="analysis-footnote"><svg class="icon small"><use href="#i-info"/></svg><span>XML dosyalari tarayicinizda okunur. Attribute sirasi normalize edilir; bos text node'lari karsilastirma disinda tutulur.</span></div></div></section>
+        </section>
+
+        <section id="converter-view" class="workspace-view" data-view="converter" hidden>
+          <section class="page-heading">
+            <div>
+              <div class="eyebrow">BİRİM DÖNÜŞÜMÜ</div>
+              <h1>Ölçü dönüştürücü</h1>
+            </div>
+            <div class="heading-actions">
+              <button id="converter-load-example" class="button button-secondary"><svg class="icon"><use href="#i-spark"/></svg>Örnek yükle (650 MB)</button>
+              <button id="converter-export-report" class="button button-primary" disabled><svg class="icon"><use href="#i-download"/></svg>Rapor indir</button>
+            </div>
+          </section>
+
+          <section class="summary-grid converter-summary-grid" aria-label="Dönüştürme özeti" aria-live="polite" aria-atomic="true">
+            <article class="summary-card">
+              <div class="summary-icon lavender"><svg class="icon"><use href="#i-scale"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">SEÇİLİ BİRİM DEĞERİ</span>
+                <strong id="converter-active-unit-title">650 MB</strong>
+                <span id="converter-active-unit-detail" class="summary-detail">Aktif kaynak: Megabyte</span>
+              </div>
+              <span class="summary-indicator good"></span>
+            </article>
+
+            <article class="summary-card">
+              <div class="summary-icon mint"><svg class="icon"><use href="#i-shield"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">HESAPLAMA STANDARDI</span>
+                <strong id="converter-standard-title">İkili (1024 B / IEC)</strong>
+                <span id="converter-standard-detail" class="summary-detail">1 kB = 1.024 Byte (Windows/Telekom)</span>
+              </div>
+            </article>
+
+            <article class="summary-card similarity-card">
+              <div class="summary-icon blue"><svg class="icon"><use href="#i-activity"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">TELEKOM VE SMS HACMİ</span>
+                <div class="similarity-value">
+                  <strong id="converter-telco-title">—</strong>
+                  <span id="converter-telco-caption">Segment</span>
+                </div>
+                <span id="converter-telco-detail" class="summary-detail">Standart GSM SMS (140B) karşılığı</span>
+                <div class="progress-track"><div id="converter-telco-progress" class="progress-fill" style="width: 65%;"></div></div>
+              </div>
+            </article>
+          </section>
+
+          <section class="converter-container" aria-label="Birim dönüşümü">
+            <div class="converter-toolbar">
+              <div class="converter-toolbar-left">
+                <span class="converter-toggle-label">HESAPLAMA TABANI:</span>
+                <div class="converter-toggle-group" role="group" aria-label="Hesaplama standardı seçimi">
+                  <button type="button" id="converter-std-binary" class="converter-toggle-btn active" aria-pressed="true" title="İkili taban: 1024 katları (Windows, Telekomünikasyon)">İkili (1024 / IEC)</button>
+                  <button type="button" id="converter-std-decimal" class="converter-toggle-btn" aria-pressed="false" title="Ondalık taban: 1000 katları (SI, Disk Üreticileri)">Ondalık (1000 / SI)</button>
+                </div>
+                <span class="options-divider"></span>
+                <label class="checkbox-label" title="Binlik ayraçları aç/kapat">
+                  <input id="converter-format-toggle" type="checkbox" checked />
+                  <span>Binlik ayraçlı göster (1.000,00)</span>
+                </label>
+              </div>
+
+              <div class="converter-presets">
+                <span class="converter-presets-label">Hazır Değerler:</span>
+                <button type="button" class="converter-preset-chip" data-preset-value="650" data-preset-unit="MB">650 MB (Görsel)</button>
+                <button type="button" class="converter-preset-chip" data-preset-value="140" data-preset-unit="B">140 B (SMS)</button>
+                <button type="button" class="converter-preset-chip" data-preset-value="1" data-preset-unit="GB">1 GB</button>
+                <button type="button" class="converter-preset-chip" data-preset-value="1" data-preset-unit="TB">1 TB</button>
+                <button id="converter-clear-all" class="text-button" style="margin-left:8px"><svg class="icon small"><use href="#i-refresh"/></svg>Temizle</button>
+              </div>
+            </div>
+
+            <!-- Dinamik Birim Satırları (DRY: converter-ui.js tarafından renderUnitRows ile oluşturulur) -->
+            <div id="converter-rows-container" class="converter-rows-grid" aria-label="Ölçü birimi dönüştürme alanları"></div>
+          </section>
+
+          <section class="converter-reference-section" aria-labelledby="converter-ref-heading">
+            <div class="section-heading">
+              <div class="section-title">
+                <h2 id="converter-ref-heading">Dönüşüm referansları</h2>
+                <span class="live-badge"><span class="status-dot"></span> Teknik Bilgi</span>
+              </div>
+            </div>
+            <div class="converter-reference-card">
+              <div class="converter-reference-content">
+                <div class="converter-ref-grid">
+                  <div class="converter-ref-box">
+                    <strong>İkili Standart (IEC - 1024 Çarpanı)</strong>
+                    <ul>
+                      <li><code>1 Byte</code> = 8 Bit</li>
+                      <li><code>1 kB (KiB)</code> = 1.024 Byte = 8.192 Bit</li>
+                      <li><code>1 MB (MiB)</code> = 1.024 kB = 1.048.576 Byte</li>
+                      <li><code>1 GB (GiB)</code> = 1.024 MB = 1.073.741.824 Byte</li>
+                      <li><code>1 TB (TiB)</code> = 1.024 GB = 1.099.511.627.776 Byte</li>
+                    </ul>
+                  </div>
+                  <div class="converter-ref-box">
+                    <strong>Ondalık Standart (SI - 1000 Çarpanı)</strong>
+                    <ul>
+                      <li><code>1 Byte</code> = 8 Bit</li>
+                      <li><code>1 kB</code> = 1.000 Byte = 8.000 Bit</li>
+                      <li><code>1 MB</code> = 1.000 kB = 1.000.000 Byte</li>
+                      <li><code>1 GB</code> = 1.000 MB = 1.000.000.000 Byte</li>
+                      <li><code>1 TB</code> = 1.000 GB = 1.000.000.000.000 Byte</li>
+                    </ul>
+                  </div>
+                  <div class="converter-ref-box">
+                    <strong>SMS ve Telekomünikasyon Entegrasyonu</strong>
+                    <ul>
+                      <li>1 Standart GSM-7 SMS parçası = <strong>140 Byte</strong> (1.120 Bit)</li>
+                      <li>1 Türkçe (Unicode UCS-2) SMS parçası = <strong>70 Byte</strong> (560 Bit)</li>
+                      <li>Görseldeki <strong>650 MB</strong> veri ~ <strong>4.868.388 adet GSM SMS</strong> hacmine eşdeğerdir.</li>
+                      <li>Tüm hesaplamalar tarayıcınızda yerel ve anlık olarak yürütülür.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="analysis-footnote">
+                <svg class="icon small"><use href="#i-info"/></svg>
+                <span>İki yönlü hesaplama: Herhangi bir kutucuğa değer yazdığınızda tüm diğer birimler eş zamanlı olarak otomatik güncellenir.</span>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section id="fee-view" class="workspace-view" data-view="fee" hidden>
+          <section class="page-heading">
+            <div>
+              <div class="eyebrow">HESAPLAMA</div>
+              <h1>Ücret hesaplama</h1>
+            </div>
+            <div class="heading-actions">
+              <button id="fee-load-example" class="button button-secondary"><svg class="icon"><use href="#i-spark"/></svg>Örnek yükle</button>
+              <button id="fee-clear" class="button button-primary"><svg class="icon"><use href="#i-refresh"/></svg>Temizle</button>
+            </div>
+          </section>
+
+          <section class="summary-grid fee-summary-grid" aria-label="Ücret hesaplama özeti" aria-live="polite" aria-atomic="true">
+            <article class="summary-card"><div class="summary-icon lavender"><svg class="icon"><use href="#i-calculator"/></svg></div><div class="summary-body"><span class="summary-label">VERGİSİZ ÜCRET</span><strong id="fee-subtotal-title">0,000000</strong><span class="summary-detail">Ses + Data + E-dergi</span></div></article>
+            <article class="summary-card"><div class="summary-icon mint"><svg class="icon"><use href="#i-check"/></svg></div><div class="summary-body"><span class="summary-label">NET ÜCRET</span><strong id="fee-result-title">0,000000</strong><span class="summary-detail">(Ses + Data) x 1,3 + E-dergi x 1,2</span></div><span class="summary-indicator good"></span></article>
+            <article class="summary-card similarity-card"><div class="summary-icon blue"><svg class="icon"><use href="#i-activity"/></svg></div><div class="summary-body"><span class="summary-label">HESAP DURUMU</span><strong id="fee-status-title">Hazır</strong><span id="fee-status-detail" class="summary-detail">Geçerli tutar veya bölme işlemi girin</span><div class="progress-track"><div id="fee-progress" class="progress-fill" style="width:0%"></div></div></div></article>
+          </section>
+
+          <section class="fee-section" aria-labelledby="fee-heading">
+            <div class="section-heading">
+              <div class="section-title">
+                <h2 id="fee-heading">Tutar bilgileri</h2>
+                <span class="live-badge"><span class="status-dot"></span> Canlı hesaplama</span>
+              </div>
+            </div>
+            <form id="fee-calculator" class="fee-card" autocomplete="off">
+              <div class="fee-fields">
+                <label class="fee-field">
+                  <span class="fee-field-heading"><span>Ses</span><span class="fee-multiplier">x 1,3</span></span>
+                  <input id="fee-value1" class="fee-input" type="text" placeholder="0,000000" spellcheck="false" aria-describedby="fee-error">
+                </label>
+                <label class="fee-field">
+                  <span class="fee-field-heading"><span>Data</span><span class="fee-multiplier">x 1,3</span></span>
+                  <input id="fee-value2" class="fee-input" type="text" placeholder="0,000000" spellcheck="false" aria-describedby="fee-error">
+                </label>
+                <label class="fee-field">
+                  <span class="fee-field-heading"><span>E-dergi</span><span class="fee-multiplier">x 1,2</span></span>
+                  <input id="fee-value3" class="fee-input" type="text" placeholder="0,000000" spellcheck="false" aria-describedby="fee-error">
+                </label>
+              </div>
+              <p class="fee-error" id="fee-error" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <section class="fee-results" aria-labelledby="fee-results-heading">
+            <div class="section-heading">
+              <div class="section-title">
+                <h2 id="fee-results-heading">Hesaplama özeti</h2>
+              </div>
+            </div>
+            <dl class="fee-total-list" aria-live="polite" aria-atomic="true">
+              <div class="fee-total-row">
+                <dt id="fee-subtotal-label">Vergisiz ücret</dt>
+                <dd><output id="fee-subtotal" for="fee-value1 fee-value2 fee-value3" aria-labelledby="fee-subtotal-label">0,000000</output></dd>
+              </div>
+              <div class="fee-total-row fee-total-row-net">
+                <dt id="fee-result-label">Net ücret</dt>
+                <dd><output id="fee-result" for="fee-value1 fee-value2 fee-value3" aria-labelledby="fee-result-label">0,000000</output></dd>
+              </div>
+            </dl>
+          </section>
+        </section>
+        <footer class="page-footer"><span><svg class="icon small"><use href="#i-lock"/></svg>İşlem verileri kaydedilmez.</span><span>Operasyon Merkezi</span></footer>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden><svg class="icon"><use href="#i-check"/></svg><span id="toast-text"></span></div>
+    <dialog id="info-dialog" class="info-dialog" aria-labelledby="dialog-title"><div class="dialog-heading"><span class="summary-icon lavender"><svg class="icon"><use id="dialog-icon" href="#i-book"/></svg></span><button id="close-dialog" class="icon-button" aria-label="Pencereyi kapat"><svg class="icon"><use href="#i-x"/></svg></button></div><h2 id="dialog-title"></h2><div id="dialog-content"></div><button id="dialog-done" class="button button-primary">Anladım<svg class="icon small"><use href="#i-check"/></svg></button></dialog>
+    <noscript><div class="noscript-notice">Operasyon Merkezi'ni kullanabilmek için tarayıcınızda JavaScript'i etkinleştirin.</div></noscript>
+  </body>
+</html>

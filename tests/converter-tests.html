@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ölçü Birimi Dönüştürücü Motor Testleri</title>
+  <style>
+    body { font: 15px/1.6 system-ui, sans-serif; margin: 40px; color: #17243c; background: #f7f8fc; }
+    .card { background: #fff; padding: 25px; border-radius: 10px; border: 1px solid #e1e4ed; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+    pre { white-space: pre-wrap; font-family: Consolas, monospace; }
+    .pass { color: #148058; font-weight: bold; }
+    .fail { color: #b91c1c; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Ölçü Birimi Dönüştürücü Motor Testleri (SOLID / TDD)</h1>
+    <p id="summary">Testler çalışıyor…</p>
+    <pre id="results"></pre>
+  </div>
+  <script src="../converter-engine.js"></script>
+  <script src="converter-tests.js"></script>
+  <script>
+    const report = runConverterEngineTests();
+    document.getElementById("summary").textContent = report.passed + " başarılı, " + report.failed + " başarısız.";
+    document.getElementById("summary").className = report.failed ? "fail" : "pass";
+    document.getElementById("results").textContent = report.results.map(function (result) {
+      return (result.passed ? "✓ " : "✗ ") + result.test + (result.error ? "\n  Hata: " + result.error : "");
+    }).join("\n");
+    document.documentElement.dataset.testResult = report.failed ? "failed" : "passed";
+  </script>
+</body>
+</html>

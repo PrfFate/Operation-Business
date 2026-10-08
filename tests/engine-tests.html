@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMS karşılaştırma motoru testleri</title>
+  <style>body{font:15px/1.6 system-ui,sans-serif;margin:40px;color:#17243c}pre{white-space:pre-wrap} .pass{color:#148058}.fail{color:#b91c1c}</style>
+</head>
+<body>
+  <h1>SMS karşılaştırma motoru testleri</h1>
+  <p id="summary">Testler çalışıyor…</p>
+  <pre id="results"></pre>
+  <script src="../sms-engine.js"></script>
+  <script src="engine-tests.js"></script>
+  <script>
+    const report = runEngineTests();
+    document.getElementById("summary").textContent = report.passed + " başarılı, " + report.failed + " başarısız.";
+    document.getElementById("summary").className = report.failed ? "fail" : "pass";
+    document.getElementById("results").textContent = report.results.map(function (result) { return (result.passed ? "✓ " : "✗ ") + result.test + (result.error ? "\n  " + result.error : ""); }).join("\n");
+    document.documentElement.dataset.testResult = report.failed ? "failed" : "passed";
+  </script>
+</body>
+</html>
