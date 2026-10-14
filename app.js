@@ -102,20 +102,92 @@
     document.querySelectorAll('[data-side="' + side + '"][data-action="copy"], [data-side="' + side + '"][data-action="clear"]').forEach((button) => { button.disabled = !hasText; });
   }
 
+  const INVISIBLE_PATTERN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u00a0\u034f\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2000-\u200f\u2028-\u202f\u205f-\u206f\u2800\u3000\u3164\ufe00-\ufe0f\ufeff\uffa0]/u;
+
+  function renderRunContent(fragment, text, type, showNonAscii) {
+    if (!showNonAscii) {
+      if (type === "equal" || !type) {
+        fragment.append(document.createTextNode(text));
+      } else {
+        const mark = document.createElement("mark");
+        mark.className = type;
+        mark.textContent = text;
+        fragment.append(mark);
+      }
+      return;
+    }
+
+    const chars = Array.from(text);
+    let buffer = "";
+    let currentCategory = null;
+
+    function flush() {
+      if (!buffer) return;
+      if (currentCategory === "invisible") {
+        const mark = document.createElement("mark");
+        mark.className = type && type !== "equal" ? type + " invisible-char" : "invisible-char";
+        mark.textContent = buffer;
+        fragment.append(mark);
+      } else if (currentCategory === "nonascii") {
+        const mark = document.createElement("mark");
+        mark.className = type && type !== "equal" ? type + " non-ascii" : "non-ascii";
+        mark.textContent = buffer;
+        fragment.append(mark);
+      } else {
+        if (type && type !== "equal") {
+          const mark = document.createElement("mark");
+          mark.className = type;
+          mark.textContent = buffer;
+          fragment.append(mark);
+        } else {
+          fragment.append(document.createTextNode(buffer));
+        }
+      }
+      buffer = "";
+    }
+
+    for (let i = 0; i < chars.length; i++) {
+      const ch = chars[i];
+      const code = ch.codePointAt(0);
+      let cat = "normal";
+      if (INVISIBLE_PATTERN.test(ch)) {
+        cat = "invisible";
+      } else if (code > 127) {
+        cat = "nonascii";
+      }
+
+      if (cat !== currentCategory) {
+        flush();
+        currentCategory = cat;
+      }
+      buffer += ch;
+    }
+    flush();
+  }
+
   function renderHighlights(side, runs) {
     const layer = $(side + "-highlight");
     layer.replaceChildren();
-    if (!$("highlight-differences").checked) return;
+    const showDiffs = $("highlight-differences").checked;
+    const showNonAscii = $("highlight-nonascii") ? $("highlight-nonascii").checked : true;
+
+    if (!showDiffs && !showNonAscii) return;
+    if (!runs || runs.length === 0) return;
+
     const fragment = document.createDocumentFragment();
     runs.forEach((run) => {
-      if (run.type === "equal") fragment.append(document.createTextNode(run.text));
-      else {
-        const mark = document.createElement("mark");
-        mark.className = run.type;
-        mark.textContent = run.text;
-        fragment.append(mark);
-      }
+      const type = !showDiffs && run.type !== "equal" ? "equal" : run.type;
+      renderRunContent(fragment, run.text, type, showNonAscii);
     });
+
+    if (!showDiffs) {
+      const anyMark = fragment.querySelector("mark");
+      if (!anyMark) {
+        layer.replaceChildren();
+        return;
+      }
+    }
+
     // The extra newline keeps textarea and highlight scrolling aligned at the end.
     fragment.append(document.createTextNode("\n"));
     layer.append(fragment);
@@ -197,6 +269,20 @@
     const fragment = document.createDocumentFragment();
     entries.slice(0, 100).forEach((entry) => {
       const row = document.createElement("tr");
+      row.className = "clickable";
+      row.setAttribute("role", "button");
+      row.setAttribute("tabindex", "0");
+      row.title = (entry.side === "left" ? "Sol" : "Sağ") + " metinde bu karaktere gitmek için tıklayın (Satır " + entry.line + ", sütun " + entry.column + ")";
+
+      const onJump = () => focusCharacter(entry.side, entry);
+      row.addEventListener("click", onJump);
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onJump();
+        }
+      });
+
       const sideCell = document.createElement("td");
       const sideLabel = document.createElement("span");
       sideLabel.className = "table-side";
@@ -221,6 +307,10 @@
       positionDetail.className = "position-detail";
       positionDetail.textContent = "Satır " + entry.line + ", sütun " + entry.column;
       positionCell.append(positionDetail);
+      const jumpBadge = document.createElement("span");
+      jumpBadge.className = "jump-link-badge";
+      jumpBadge.textContent = "Git ↗";
+      positionCell.append(jumpBadge);
       const descriptionCell = document.createElement("td");
       descriptionCell.textContent = entryDescription(entry);
       row.append(sideCell, characterCell, unicodeCell, positionCell, descriptionCell);
@@ -229,6 +319,43 @@
     $("character-table-body").replaceChildren(fragment);
     $("table-limit-note").hidden = entries.length <= 100;
     setText("table-limit-note", "Toplam " + number.format(entries.length) + " kaydın ilk 100 tanesi gösteriliyor. Tam liste için raporu indirin.");
+  }
+
+  function getSelectionOffsets(text, entry) {
+    const chars = Array.from(text);
+    const targetIndex = entry.position - 1;
+    let offset = 0;
+    for (let i = 0; i < targetIndex && i < chars.length; i++) {
+      offset += chars[i].length;
+    }
+    const charLen = targetIndex >= 0 && targetIndex < chars.length ? chars[targetIndex].length : 1;
+    return { start: offset, end: offset + charLen };
+  }
+
+  function focusCharacter(side, entry) {
+    const textarea = $(side + "-text");
+    const card = $(side + "-card");
+    if (!textarea || !card) return;
+
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    textarea.focus();
+
+    const range = getSelectionOffsets(textarea.value, entry);
+    try {
+      textarea.setSelectionRange(range.start, range.end);
+    } catch (_) {}
+
+    const lineHeight = 24;
+    const targetScroll = Math.max(0, (entry.line - 2) * lineHeight);
+    textarea.scrollTop = targetScroll;
+    const layer = $(side + "-highlight");
+    if (layer) layer.scrollTop = targetScroll;
+
+    card.classList.remove("card-pulse");
+    void card.offsetWidth;
+    card.classList.add("card-pulse");
+
+    notify((entry.side === "left" ? "Sol metin" : "Sağ metin") + ": " + entry.line + ". satır, " + entry.column + ". sütundaki '" + entry.display + "' seçildi.");
   }
 
   function analyze() {
@@ -241,9 +368,11 @@
     current = { left, right, comparison, raw };
     sides.forEach((side) => renderSide(side, current[side]));
     renderSummary(left, right, comparison);
-    // Wait for both texts before showing one-sided deletions/additions.
-    renderHighlights("left", left.text && right.text ? raw.leftRuns : []);
-    renderHighlights("right", left.text && right.text ? raw.rightRuns : []);
+    const hasBoth = Boolean(left.text && right.text);
+    const leftRuns = hasBoth ? raw.leftRuns : (left.text ? [{ type: "equal", text: left.text }] : []);
+    const rightRuns = hasBoth ? raw.rightRuns : (right.text ? [{ type: "equal", text: right.text }] : []);
+    renderHighlights("left", leftRuns);
+    renderHighlights("right", rightRuns);
     renderTable();
   }
 
@@ -346,7 +475,10 @@
     });
   });
 
-  ["ignore-whitespace", "ignore-case", "highlight-differences"].forEach((id) => $(id).addEventListener("change", analyze));
+  ["ignore-whitespace", "ignore-case", "highlight-differences", "highlight-nonascii"].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener("change", analyze);
+  });
   $("side-filter").addEventListener("change", renderTable);
   document.querySelectorAll(".analysis-tab").forEach((tab) => {
     tab.addEventListener("click", () => selectTab(tab, false));
