@@ -12,6 +12,7 @@
     <script src="xml-engine.js" defer></script>
     <script src="converter-engine.js" defer></script>
     <script src="converter-ui.js" defer></script>
+    <script src="sql-engine.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -41,6 +42,7 @@
       <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
       <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8a3 3 0 0 1-6 0Zm-14 0 3-8 3 8a3 3 0 0 1-6 0ZM12 3v18M7 7h10"/></symbol>
       <symbol id="i-calculator" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></symbol>
     </svg>
 
     <a class="skip-link" href="#main">İçeriğe geç</a>
@@ -52,6 +54,7 @@
         <a class="nav-item" href="#xml-view" aria-label="XML karşılaştırma" title="XML karşılaştırma" data-view-link="xml"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg><span>XML karşılaştırma</span><span class="nav-active-dot"></span></a>
         <a class="nav-item" href="#converter-view" aria-label="Ölçü dönüştürücü" title="Ölçü dönüştürücü" data-view-link="converter"><svg class="icon" aria-hidden="true"><use href="#i-scale"/></svg><span>Ölçü dönüştürücü</span><span class="nav-active-dot"></span></a>
         <a class="nav-item" href="#fee-view" aria-label="Ücret hesaplama" title="Ücret hesaplama" data-view-link="fee"><svg class="icon" aria-hidden="true"><use href="#i-calculator"/></svg><span>Ücret hesaplama</span><span class="nav-active-dot"></span></a>
+        <a class="nav-item" href="#sql-view" aria-label="SQL liste dönüştürücü" title="SQL liste dönüştürücü" data-view-link="sql"><svg class="icon" aria-hidden="true"><use href="#i-database"/></svg><span>SQL liste dönüştürücü</span><span class="nav-active-dot"></span></a>
       </nav>
       <div class="workspace-label support-label">KAYNAKLAR</div>
       <button class="nav-item" data-dialog="guide" aria-label="Karakter rehberi" title="Karakter rehberi"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span>Karakter rehberi</span></button>
@@ -302,6 +305,151 @@
               </div>
             </dl>
           </section>
+        </section>
+
+        <section id="sql-view" class="workspace-view" data-view="sql" hidden>
+          <section class="page-heading">
+            <div>
+              <div class="eyebrow">VERİTABANI / SQL</div>
+              <h1>SQL liste dönüştürücü</h1>
+            </div>
+            <div class="heading-actions">
+              <button id="sql-load-example" class="button button-secondary"><svg class="icon"><use href="#i-spark"/></svg>Örnek yükle</button>
+              <button id="sql-clear" class="button button-primary"><svg class="icon"><use href="#i-refresh"/></svg>Temizle</button>
+            </div>
+          </section>
+
+          <section class="summary-grid sql-summary-grid" aria-label="SQL liste özeti">
+            <article class="summary-card">
+              <div class="summary-icon lavender"><svg class="icon"><use href="#i-list"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">GİRİLEN ELEMAN</span>
+                <strong id="sql-total-count">0</strong>
+                <span class="summary-detail" id="sql-total-detail">Veri bekleniyor</span>
+              </div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-icon mint"><svg class="icon"><use href="#i-check"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">TEKİL ELEMAN</span>
+                <strong id="sql-unique-count">0</strong>
+                <span class="summary-detail" id="sql-unique-detail">Mükerrerler hariç</span>
+              </div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-icon blue"><svg class="icon"><use href="#i-database"/></svg></div>
+              <div class="summary-body">
+                <span class="summary-label">ÇIKTI FORMATI</span>
+                <strong id="sql-format-label">12345, 54325</strong>
+                <span class="summary-detail" id="sql-format-detail">Sayısal · Virgüllü</span>
+              </div>
+            </article>
+          </section>
+
+          <section class="editors-grid sql-editors-grid">
+            <!-- Sol Kart: Giriş -->
+            <article class="editor-card" id="sql-left-card">
+              <div class="editor-header">
+                <div class="editor-label">
+                  <span class="letter-badge left-letter">IN</span>
+                  <div>
+                    <label for="sql-input">Giriş listesi</label>
+                    <span>Alt alta, boşluklu veya virgülsüz sayılar / metinler</span>
+                  </div>
+                </div>
+                <div class="editor-actions">
+                  <button class="icon-button" id="sql-paste-btn" title="Panodan yapıştır" aria-label="Panodan yapıştır">
+                    <svg class="icon"><use href="#i-paste"/></svg>
+                  </button>
+                  <button class="icon-button" id="sql-input-clear-btn" title="Girişi temizle" aria-label="Girişi temizle" disabled>
+                    <svg class="icon"><use href="#i-trash"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="editor-surface">
+                <textarea id="sql-input" class="sms-input" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Sayıları veya ID'leri yapıştırın...&#10;&#10;Örnek:&#10;12345&#10;54325&#10;453456"></textarea>
+              </div>
+              <div class="editor-status">
+                <span class="encoding-badge" id="sql-input-badge">Veri bekleniyor</span>
+                <span class="input-limit"><span id="sql-input-lines">0</span> satır</span>
+              </div>
+            </article>
+
+            <!-- Sağ Kart: Çıkış -->
+            <article class="editor-card" id="sql-right-card">
+              <div class="editor-header">
+                <div class="editor-label">
+                  <span class="letter-badge right-letter">SQL</span>
+                  <div>
+                    <label for="sql-output">SQL çıktısı</label>
+                    <span>IN (...) sorgularında kullanıma hazır format</span>
+                  </div>
+                </div>
+                <div class="editor-actions">
+                  <button class="icon-button" id="sql-copy-btn" title="SQL çıktısını kopyala" aria-label="SQL çıktısını kopyala" disabled>
+                    <svg class="icon"><use href="#i-copy"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="editor-surface">
+                <textarea id="sql-output" class="sms-input" readonly spellcheck="false" placeholder="Dönüştürülen SQL listesi burada görünecek..."></textarea>
+              </div>
+              <div class="editor-status">
+                <button type="button" class="text-button" id="sql-copy-text-btn" disabled style="padding:0;font-size:11px;font-weight:600;color:var(--primary);cursor:pointer;background:none;border:none;display:inline-flex;align-items:center;gap:4px;">
+                  <svg class="icon small"><use href="#i-copy"/></svg> Çıktıyı Kopyala
+                </button>
+                <span class="input-limit"><span id="sql-output-chars">0</span> karakter</span>
+              </div>
+            </article>
+          </section>
+
+          <!-- Ayarlar Çubuğu -->
+          <div class="comparison-options sql-options" style="margin-top:14px;">
+            <div class="option-group">
+              <label class="select-label" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#5d6b72;">
+                <span>Tırnak:</span>
+                <select id="sql-quote-style" style="padding:4px 8px;font-size:11px;border:1px solid #cfd7da;border-radius:4px;background:#fff;color:#35434a;">
+                  <option value="none" selected>Tırnaksız (Sayısal): 12345, 54325</option>
+                  <option value="single">Tek Tırnaklı (Metin): '12345', '54325'</option>
+                  <option value="double">Çift Tırnaklı: "12345", "54325"</option>
+                </select>
+              </label>
+
+              <label class="select-label" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#5d6b72;">
+                <span>Sarma:</span>
+                <select id="sql-wrap-style" style="padding:4px 8px;font-size:11px;border:1px solid #cfd7da;border-radius:4px;background:#fff;color:#35434a;">
+                  <option value="none" selected>Sadece Liste: 12345, 54325</option>
+                  <option value="parens">Parantez: (12345, 54325)</option>
+                  <option value="in">IN İfadesi: IN (12345, 54325)</option>
+                  <option value="not_in">NOT IN İfadesi: NOT IN (12345, 54325)</option>
+                </select>
+              </label>
+
+              <label class="select-label" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#5d6b72;">
+                <span>Ayırıcı:</span>
+                <select id="sql-sep-style" style="padding:4px 8px;font-size:11px;border:1px solid #cfd7da;border-radius:4px;background:#fff;color:#35434a;">
+                  <option value="comma_space" selected>Virgül + Boşluk (, )</option>
+                  <option value="comma_only">Sadece Virgül (,)</option>
+                  <option value="comma_newline">Alt Alta Virgüllü (,\n)</option>
+                </select>
+              </label>
+
+              <label class="select-label" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#5d6b72;">
+                <span>Ayırma:</span>
+                <select id="sql-split-mode" style="padding:4px 8px;font-size:11px;border:1px solid #cfd7da;border-radius:4px;background:#fff;color:#35434a;">
+                  <option value="auto" selected>Otomatik (Boşluk / Satır / Virgül)</option>
+                  <option value="lines">Sadece Satır Satır</option>
+                </select>
+              </label>
+
+              <span class="options-divider"></span>
+
+              <label class="checkbox-label">
+                <input id="sql-distinct" type="checkbox"/>
+                <span>Mükerrerleri kaldır</span>
+              </label>
+            </div>
+          </div>
         </section>
         <footer class="page-footer"><span><svg class="icon small"><use href="#i-lock"/></svg>İşlem verileri kaydedilmez.</span><span>Operasyon Merkezi</span></footer>
       </main>

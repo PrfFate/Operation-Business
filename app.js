@@ -543,6 +543,7 @@
       if (view === "xml") crumb.textContent = "XML Karşılaştırma";
       else if (view === "converter") crumb.textContent = "Ölçü Birimi Dönüştürücü";
       else if (view === "fee") crumb.textContent = "Ücret Hesaplama";
+      else if (view === "sql") crumb.textContent = "SQL Liste Dönüştürücü";
       else crumb.textContent = "SMS Karşılaştırma";
       document.title = crumb.textContent + " · Operasyon Merkezi";
     }
@@ -839,9 +840,149 @@
     notify("Örnek ücret değerleri yüklendi.");
   });
 
-  const initialView = location.hash === "#xml-view" ? "xml" : location.hash === "#converter-view" ? "converter" : location.hash === "#fee-view" ? "fee" : "sms";
+  // --- SQL List Converter ---
+  function convertSql() {
+    const inputEl = $("sql-input");
+    const outputEl = $("sql-output");
+    if (!inputEl || !outputEl) return;
+
+    const text = inputEl.value;
+    const mode = $("sql-split-mode") ? $("sql-split-mode").value : "auto";
+    const distinct = $("sql-distinct") ? $("sql-distinct").checked : false;
+    const quote = $("sql-quote-style") ? $("sql-quote-style").value : "none";
+    const wrap = $("sql-wrap-style") ? $("sql-wrap-style").value : "none";
+    const separator = $("sql-sep-style") ? $("sql-sep-style").value : "comma_space";
+
+    const sepMap = {
+      comma_space: ", ",
+      comma_only: ",",
+      comma_newline: ",\n"
+    };
+
+    let rawTokens = [];
+    if (root.SqlEngine) {
+      rawTokens = root.SqlEngine.parse(text, { mode: mode, distinct: false });
+    } else {
+      rawTokens = text.split(mode === "lines" ? /\r\n|\r|\n/ : /[\r\n,;\t ]+/).map((t) => t.trim().replace(/^['"`]+|['"`]+$/g, "")).filter(Boolean);
+    }
+
+    const totalCount = rawTokens.length;
+    const uniqueTokens = Array.from(new Set(rawTokens));
+    const uniqueCount = uniqueTokens.length;
+
+    const tokensToFormat = distinct ? uniqueTokens : rawTokens;
+
+    let result = "";
+    if (root.SqlEngine) {
+      result = root.SqlEngine.format(tokensToFormat, {
+        quote: quote,
+        wrap: wrap,
+        separator: sepMap[separator] || ", "
+      });
+    } else {
+      const mapped = tokensToFormat.map((t) => quote === "single" ? "'" + t + "'" : quote === "double" ? '"' + t + '"' : t);
+      const body = mapped.join(sepMap[separator] || ", ");
+      result = wrap === "parens" ? "(" + body + ")" : wrap === "in" ? "IN (" + body + ")" : wrap === "not_in" ? "NOT IN (" + body + ")" : body;
+    }
+
+    outputEl.value = result;
+
+    setText("sql-total-count", number.format(totalCount));
+    setText("sql-total-detail", totalCount === 0 ? "Veri bekleniyor" : number.format(totalCount) + " eleman bulundu");
+    setText("sql-unique-count", number.format(uniqueCount));
+    setText("sql-unique-detail", totalCount > uniqueCount ? number.format(totalCount - uniqueCount) + " mükerrer kayıt var" : "Mükerrer kayıt yok");
+
+    const formatLabels = {
+      none: "Sayısal (Tırnaksız)",
+      single: "Tek Tırnaklı ('...')",
+      double: 'Çift Tırnaklı ("...")'
+    };
+    setText("sql-format-label", formatLabels[quote] || "Sayısal");
+    const wrapLabels = {
+      none: "Sadece Virgüllü",
+      parens: "Parantez İçi (...)",
+      in: "IN (...) İfadesi",
+      not_in: "NOT IN (...) İfadesi"
+    };
+    setText("sql-format-detail", wrapLabels[wrap] || "Sadece Virgüllü");
+
+    const lineCount = text ? text.split(/\r\n|\r|\n/).length : 0;
+    setText("sql-input-lines", number.format(lineCount));
+    setText("sql-output-chars", number.format(result.length));
+
+    const badge = $("sql-input-badge");
+    if (badge) {
+      badge.className = "encoding-badge" + (totalCount > 0 ? " good" : "");
+      badge.textContent = totalCount === 0 ? "Veri bekleniyor" : number.format(totalCount) + " adet değer";
+    }
+
+    const hasOutput = result.length > 0;
+    $("sql-copy-btn").disabled = !hasOutput;
+    $("sql-copy-text-btn").disabled = !hasOutput;
+    $("sql-input-clear-btn").disabled = !text;
+  }
+
+  $("sql-input").addEventListener("input", convertSql);
+  ["sql-split-mode", "sql-distinct", "sql-quote-style", "sql-wrap-style", "sql-sep-style"].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener("change", convertSql);
+  });
+
+  $("sql-load-example").addEventListener("click", () => {
+    $("sql-input").value = "12345\n54325\n453456";
+    convertSql();
+    notify("Örnek sayılar yüklendi.");
+  });
+
+  $("sql-clear").addEventListener("click", () => {
+    $("sql-input").value = "";
+    convertSql();
+    $("sql-input").focus();
+    notify("SQL alanları temizlendi.");
+  });
+
+  $("sql-input-clear-btn").addEventListener("click", () => {
+    $("sql-input").value = "";
+    convertSql();
+    $("sql-input").focus();
+  });
+
+  $("sql-paste-btn").addEventListener("click", async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error("clipboard-unavailable");
+      const clipboard = await navigator.clipboard.readText();
+      if (!clipboard) { notify("Panoda yapıştırılacak bir metin bulunamadı."); return; }
+      $("sql-input").value = clipboard;
+      convertSql();
+      $("sql-input").focus();
+      notify("Panodan sayılar yapıştırıldı.");
+    } catch (_) {
+      $("sql-input").focus();
+      notify("Panoyu yapıştırmak için Ctrl+V veya ⌘V kullanın.");
+    }
+  });
+
+  async function copySqlOutput() {
+    const output = $("sql-output").value;
+    if (!output) return;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("clipboard-unavailable");
+      await navigator.clipboard.writeText(output);
+      notify("SQL çıktısı panoya kopyalandı.");
+    } catch (_) {
+      $("sql-output").focus();
+      $("sql-output").select();
+      notify("Çıktı seçildi. Kopyalamak için Ctrl+C veya ⌘C kullanın.");
+    }
+  }
+
+  $("sql-copy-btn").addEventListener("click", copySqlOutput);
+  $("sql-copy-text-btn").addEventListener("click", copySqlOutput);
+
+  const initialView = location.hash === "#xml-view" ? "xml" : location.hash === "#converter-view" ? "converter" : location.hash === "#fee-view" ? "fee" : location.hash === "#sql-view" ? "sql" : "sms";
   setView(initialView);
   analyze();
   analyzeXml();
   calculateFee();
+  convertSql();
 })();
