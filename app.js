@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const engine = window.SmsEngine;
   const xmlEngine = window.XmlEngine;
+  const sqlEngine = window.SqlEngine;
   const sides = ["left", "right"];
   const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 });
   let activeTab = "nonascii";
@@ -860,8 +861,9 @@
     };
 
     let rawTokens = [];
-    if (root.SqlEngine) {
-      rawTokens = root.SqlEngine.parse(text, { mode: mode, distinct: false });
+    const engineToUse = sqlEngine || window.SqlEngine;
+    if (engineToUse) {
+      rawTokens = engineToUse.parse(text, { mode: mode, distinct: false });
     } else {
       rawTokens = text.split(mode === "lines" ? /\r\n|\r|\n/ : /[\r\n,;\t ]+/).map((t) => t.trim().replace(/^['"`]+|['"`]+$/g, "")).filter(Boolean);
     }
@@ -873,8 +875,8 @@
     const tokensToFormat = distinct ? uniqueTokens : rawTokens;
 
     let result = "";
-    if (root.SqlEngine) {
-      result = root.SqlEngine.format(tokensToFormat, {
+    if (engineToUse) {
+      result = engineToUse.format(tokensToFormat, {
         quote: quote,
         wrap: wrap,
         separator: sepMap[separator] || ", "
@@ -923,6 +925,7 @@
   }
 
   $("sql-input").addEventListener("input", convertSql);
+  $("sql-input").addEventListener("paste", () => setTimeout(convertSql, 0));
   ["sql-split-mode", "sql-distinct", "sql-quote-style", "sql-wrap-style", "sql-sep-style"].forEach((id) => {
     const el = $(id);
     if (el) el.addEventListener("change", convertSql);
