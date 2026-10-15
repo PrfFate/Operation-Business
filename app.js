@@ -852,11 +852,11 @@
     const distinct = $("sql-distinct") ? $("sql-distinct").checked : false;
     const quote = $("sql-quote-style") ? $("sql-quote-style").value : "none";
     const wrap = $("sql-wrap-style") ? $("sql-wrap-style").value : "none";
-    const separator = $("sql-sep-style") ? $("sql-sep-style").value : "comma_space";
+    const separator = $("sql-sep-style") ? $("sql-sep-style").value : "comma_only";
 
     const sepMap = {
-      comma_space: ", ",
       comma_only: ",",
+      comma_space: ", ",
       comma_newline: ",\n"
     };
 
@@ -879,11 +879,11 @@
       result = engineToUse.format(tokensToFormat, {
         quote: quote,
         wrap: wrap,
-        separator: sepMap[separator] || ", "
+        separator: sepMap[separator] || ","
       });
     } else {
       const mapped = tokensToFormat.map((t) => quote === "single" ? "'" + t + "'" : quote === "double" ? '"' + t + '"' : t);
-      const body = mapped.join(sepMap[separator] || ", ");
+      const body = mapped.join(sepMap[separator] || ",");
       result = wrap === "parens" ? "(" + body + ")" : wrap === "in" ? "IN (" + body + ")" : wrap === "not_in" ? "NOT IN (" + body + ")" : body;
     }
 

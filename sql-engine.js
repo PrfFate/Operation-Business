@@ -1,4 +1,4 @@
-﻿(function (root) {
+(function (root) {
   "use strict";
 
   function parse(text, options) {
@@ -38,7 +38,7 @@
     if (!tokens || tokens.length === 0) return "";
     options = options || {};
     const quote = options.quote || "none";
-    const separator = options.separator || ", ";
+    const separator = options.separator || ",";
     const wrap = options.wrap || "none";
 
     const mapped = tokens.map(function (token) {
