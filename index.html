@@ -104,93 +104,100 @@
             <article class="summary-card similarity-card"><div class="summary-icon blue"><svg class="icon"><use href="#i-activity"/></svg></div><div class="summary-body"><span class="summary-label">YAPISAL BENZERLIK</span><div class="similarity-value"><strong id="xml-similarity-title">-</strong><span id="xml-similarity-caption">Henüz hesaplanmadi</span></div><div class="progress-track"><div id="xml-similarity-progress" class="progress-fill"></div></div></div></article>
           </section>
 
-          <section class="comparison-section" aria-labelledby="xml-comparison-heading">
-            <div class="section-heading"><div class="section-title"><h2 id="xml-comparison-heading">XML karsilastirmasi</h2><span class="live-badge"><span class="status-dot"></span> Yerel analiz</span></div><button id="xml-clear-all" class="text-button" disabled><svg class="icon small"><use href="#i-refresh"/></svg>Tumunu temizle</button></div>
-            <div class="editors-grid xml-editors-grid">
-              <article class="editor-card" id="xml-left-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge left-letter">A</span><div><label for="xml-left-text">Sol XML</label><span>Referans dosya</span></div></div><div class="editor-actions"><label class="icon-button file-button" title="Sol XML yukle" aria-label="Sol XML yukle"><input id="xml-left-file" type="file" accept=".xml,text/xml,application/xml"/><svg class="icon"><use href="#i-file"/></svg></label><button class="icon-button" data-xml-action="clear" data-xml-side="left" title="Sol XML temizle" aria-label="Sol XML temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface xml-editor-surface"><div class="editor-highlight" id="xml-left-highlight" aria-hidden="true"></div><textarea id="xml-left-text" class="sms-input" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Referans XML dosyasini yukleyin veya buraya yapistirin..."></textarea></div><div class="editor-status"><span class="encoding-badge" id="xml-left-valid">XML bekleniyor</span><span class="input-limit"><span id="xml-left-length">0</span> karakter</span></div></article>
-
-              <button id="xml-swap-texts" class="swap-button" title="XML dosyalarinin yerini degistir" aria-label="Sol ve sag XML'in yerini degistir" disabled><svg class="icon"><use href="#i-swap"/></svg></button>
-
-              <article class="editor-card" id="xml-right-card"><div class="editor-header"><div class="editor-label"><span class="letter-badge right-letter">B</span><div><label for="xml-right-text">Sag XML</label><span>Karsilastirilacak dosya</span></div></div><div class="editor-actions"><label class="icon-button file-button" title="Sag XML yukle" aria-label="Sag XML yukle"><input id="xml-right-file" type="file" accept=".xml,text/xml,application/xml"/><svg class="icon"><use href="#i-file"/></svg></label><button class="icon-button" data-xml-action="clear" data-xml-side="right" title="Sag XML temizle" aria-label="Sag XML temizle" disabled><svg class="icon"><use href="#i-trash"/></svg></button></div></div><div class="editor-surface xml-editor-surface"><div class="editor-highlight" id="xml-right-highlight" aria-hidden="true"></div><textarea id="xml-right-text" class="sms-input" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Karsilastirilacak XML dosyasini yukleyin veya buraya yapistirin..."></textarea></div><div class="editor-status"><span class="encoding-badge" id="xml-right-valid">XML bekleniyor</span><span class="input-limit"><span id="xml-right-length">0</span> karakter</span></div></article>
-            </div>
-            <div class="comparison-options"><span class="highlight-legend"><span class="legend-dot removed"></span>Soldaki fark<span class="legend-dot added"></span>Sagdaki fark</span></div>
-            <div class="comparison-note" id="xml-comparison-note" hidden></div>
-          </section>
-
-          <!-- Görsel Toad / GitHub Satır Satır Diff Alanı -->
-          <section class="analysis-section" id="xml-diff-viewer-section" aria-labelledby="xml-diff-viewer-heading">
+          <section class="comparison-section xml-comparison-section" aria-labelledby="xml-comparison-heading">
             <div class="section-heading">
               <div class="section-title">
-                <h2 id="xml-diff-viewer-heading">Görsel Satır Karşılaştırması</h2>
+                <h2 id="xml-comparison-heading">XML Karşılaştırması</h2>
                 <span id="xml-line-diff-badge" class="count-badge">0 satır farkı</span>
               </div>
-              <div class="xml-view-modes" role="group" aria-label="Görünüm modu">
-                <button type="button" id="xml-mode-split" class="converter-toggle-btn active" title="Yan yana iki sütun (Toad / WinMerge tarzı)">
-                  <svg class="icon small" style="width:12px;height:12px;margin-right:4px;"><use href="#i-copy"/></svg>Yan Yana (Toad)
+              <div class="heading-actions" style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+                <button type="button" id="xml-format-canonical-btn" class="button button-secondary" style="height:28px;padding:0 10px;font-size:11px;" title="XML'leri standart girintili (indent) formata dönüştür">
+                  <svg class="icon small" style="width:12px;height:12px;"><use href="#i-code"/></svg> Standart Format
                 </button>
-                <button type="button" id="xml-mode-unified" class="converter-toggle-btn" title="Tek sütunda birleşik (GitHub commit tarzı)">
-                  <svg class="icon small" style="width:12px;height:12px;margin-right:4px;"><use href="#i-list"/></svg>Birleşik (GitHub)
-                </button>
+                <button id="xml-clear-all" class="text-button" disabled><svg class="icon small"><use href="#i-refresh"/></svg>Tümünü temizle</button>
               </div>
             </div>
 
-            <div class="analysis-card xml-diff-card">
-              <div class="xml-diff-toolbar">
-                <div class="xml-diff-stats">
-                  <span class="xml-stat-chip added"><span class="stat-symbol">+</span><strong id="xml-stat-added">0</strong> eklenen satır</span>
-                  <span class="xml-stat-chip removed"><span class="stat-symbol">-</span><strong id="xml-stat-removed">0</strong> silinen satır</span>
-                  <span class="xml-stat-chip total"><strong id="xml-stat-total">0</strong> toplam satır</span>
+            <!-- Entegre Toad / WinMerge Editör Kartları -->
+            <div class="editors-grid xml-editors-grid">
+              <!-- Sol XML Kartı -->
+              <article class="editor-card xml-card" id="xml-left-card">
+                <div class="editor-header">
+                  <div class="editor-label">
+                    <span class="letter-badge left-letter">A</span>
+                    <div>
+                      <label for="xml-left-text">Sol XML (Referans)</label>
+                      <span id="xml-stat-removed-label">Silinen: <strong id="xml-stat-removed">0</strong> satır</span>
+                    </div>
+                  </div>
+                  <div class="editor-actions">
+                    <label class="icon-button file-button" title="Sol XML yükle" aria-label="Sol XML yükle">
+                      <input id="xml-left-file" type="file" accept=".xml,text/xml,application/xml"/>
+                      <svg class="icon"><use href="#i-file"/></svg>
+                    </label>
+                    <button class="icon-button" data-xml-action="clear" data-xml-side="left" title="Sol XML temizle" aria-label="Sol XML temizle" disabled>
+                      <svg class="icon"><use href="#i-trash"/></svg>
+                    </button>
+                  </div>
                 </div>
-                <div class="xml-diff-actions">
-                  <button type="button" id="xml-format-canonical-btn" class="button button-secondary" style="height:28px;padding:0 10px;font-size:11px;" title="XML'leri standart girintili (canonical) formata göre karşılaştır">
-                    <svg class="icon small" style="width:12px;height:12px;"><use href="#i-code"/></svg> Standart Format
-                  </button>
+
+                <div class="editor-surface xml-integrated-surface" id="xml-left-surface">
+                  <div class="xml-gutter" id="xml-left-gutter" aria-hidden="true"></div>
+                  <div class="xml-diff-backdrop" id="xml-left-backdrop" aria-hidden="true"></div>
+                  <textarea id="xml-left-text" class="xml-integrated-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Referans XML dosyasını yükleyin veya buraya yapıştırın..."></textarea>
                 </div>
-              </div>
 
-              <div id="xml-line-diff-empty" class="analysis-empty">
-                <span class="empty-icon"><svg class="icon"><use href="#i-code"/></svg></span>
-                <strong>Görsel karşılaştırma bekleniyor</strong>
-                <p>İki XML girdiğinizde yeşil (+) ve kırmızı (-) satır renklendirmesiyle tam kod farkı burada listelenir.</p>
-              </div>
+                <div class="editor-status">
+                  <span class="encoding-badge" id="xml-left-valid">XML bekleniyor</span>
+                  <span class="input-limit"><span id="xml-left-lines">0</span> satır · <span id="xml-left-length">0</span> karakter</span>
+                </div>
+              </article>
 
-              <!-- Split (Yan Yana) Tablo Görünümü -->
-              <div id="xml-split-viewer-wrapper" class="xml-diff-viewer-wrapper split-mode" hidden>
-                <table class="xml-line-diff-table split-table">
-                  <thead>
-                    <tr>
-                      <th class="col-num">L#</th>
-                      <th class="col-sign"></th>
-                      <th class="col-code">Sol XML (Referans)</th>
-                      <th class="col-num">R#</th>
-                      <th class="col-sign"></th>
-                      <th class="col-code">Sağ XML (Yeni)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="xml-split-tbody"></tbody>
-                </table>
-              </div>
+              <button id="xml-swap-texts" class="swap-button" title="XML dosyalarının yerini değiştir" aria-label="Sol ve sağ XML'in yerini değiştir" disabled>
+                <svg class="icon"><use href="#i-swap"/></svg>
+              </button>
 
-              <!-- Unified (Birleşik GitHub) Tablo Görünümü -->
-              <div id="xml-unified-viewer-wrapper" class="xml-diff-viewer-wrapper unified-mode" hidden>
-                <table class="xml-line-diff-table unified-table">
-                  <thead>
-                    <tr>
-                      <th class="col-num">L#</th>
-                      <th class="col-num">R#</th>
-                      <th class="col-sign"></th>
-                      <th class="col-code">İçerik</th>
-                    </tr>
-                  </thead>
-                  <tbody id="xml-unified-tbody"></tbody>
-                </table>
-              </div>
+              <!-- Sağ XML Kartı -->
+              <article class="editor-card xml-card" id="xml-right-card">
+                <div class="editor-header">
+                  <div class="editor-label">
+                    <span class="letter-badge right-letter">B</span>
+                    <div>
+                      <label for="xml-right-text">Sağ XML (Yeni / Karşılaştırılan)</label>
+                      <span id="xml-stat-added-label">Eklenen: <strong id="xml-stat-added">0</strong> satır</span>
+                    </div>
+                  </div>
+                  <div class="editor-actions">
+                    <label class="icon-button file-button" title="Sağ XML yükle" aria-label="Sağ XML yükle">
+                      <input id="xml-right-file" type="file" accept=".xml,text/xml,application/xml"/>
+                      <svg class="icon"><use href="#i-file"/></svg>
+                    </label>
+                    <button class="icon-button" data-xml-action="clear" data-xml-side="right" title="Sağ XML temizle" aria-label="Sağ XML temizle" disabled>
+                      <svg class="icon"><use href="#i-trash"/></svg>
+                    </button>
+                  </div>
+                </div>
 
-              <div class="analysis-footnote">
-                <svg class="icon small"><use href="#i-info"/></svg>
-                <span><b>Kırmızı (-)</b> silinen/değişen eski satırları, <b>Yeşil (+)</b> yeni eklenen satırları gösterir. Satır numaraları orijinal dosya hizasını belirtir.</span>
-              </div>
+                <div class="editor-surface xml-integrated-surface" id="xml-right-surface">
+                  <div class="xml-gutter" id="xml-right-gutter" aria-hidden="true"></div>
+                  <div class="xml-diff-backdrop" id="xml-right-backdrop" aria-hidden="true"></div>
+                  <textarea id="xml-right-text" class="xml-integrated-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Karşılaştırılacak XML dosyasını yükleyin veya buraya yapıştırın..."></textarea>
+                </div>
+
+                <div class="editor-status">
+                  <span class="encoding-badge" id="xml-right-valid">XML bekleniyor</span>
+                  <span class="input-limit"><span id="xml-right-lines">0</span> satır · <span id="xml-right-length">0</span> karakter</span>
+                </div>
+              </article>
             </div>
+
+            <div class="comparison-options">
+              <span class="highlight-legend">
+                <span class="legend-dot removed"></span>Soldaki silinen / değişen satır (-)
+                <span class="legend-dot added"></span>Sağdaki yeni eklenen satır (+)
+              </span>
+            </div>
+            <div class="comparison-note" id="xml-comparison-note" hidden></div>
           </section>
 
           <section class="analysis-section" aria-labelledby="xml-differences-heading"><div class="section-heading"><div class="section-title"><h2 id="xml-differences-heading">Fark listesi (XPath)</h2><span id="xml-issue-count" class="count-badge">0</span></div></div><div class="analysis-card"><div class="table-wrapper xml-table-wrapper"><div id="xml-analysis-empty" class="analysis-empty"><span class="empty-icon"><svg class="icon"><use href="#i-list"/></svg></span><strong id="xml-empty-title">XML farklari burada listelenir.</strong><p id="xml-empty-detail">Iki gecerli XML eklendiginde degisen node, attribute ve text degerleri gorunur.</p></div><table id="xml-diff-table" class="character-table xml-diff-table" hidden><thead><tr><th>DURUM</th><th>YOL</th><th>TUR</th><th>SOL DEGER</th><th>SAG DEGER</th></tr></thead><tbody id="xml-diff-table-body"></tbody></table></div><div class="analysis-footnote"><svg class="icon small"><use href="#i-info"/></svg><span>XML dosyalari tarayicinizda okunur. Attribute sirasi normalize edilir; bos text node'lari karsilastirma disinda tutulur.</span></div></div></section>

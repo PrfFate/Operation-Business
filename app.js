@@ -629,29 +629,124 @@
   function renderXmlSide(side, parsed) {
     const text = xmlInput(side).value;
     setText("xml-" + side + "-length", number.format(text.length));
+    const lineCount = text ? text.split(/\r?\n/).length : 0;
+    setText("xml-" + side + "-lines", number.format(lineCount));
     const badge = $("xml-" + side + "-valid");
     badge.className = "encoding-badge" + (text ? (parsed.ok ? " good" : " warning") : "");
-    badge.textContent = !text ? "XML bekleniyor" : parsed.ok ? "Gecerli XML" : "XML hatasi";
+    badge.textContent = !text ? "XML bekleniyor" : parsed.ok ? "Geçerli XML" : "XML hatası";
     document.querySelectorAll('[data-xml-side="' + side + '"]').forEach((button) => { button.disabled = !text; });
   }
 
-  function renderXmlHighlights(side, runs) {
-    const layer = $("xml-" + side + "-highlight");
-    layer.replaceChildren();
-    const fragment = document.createDocumentFragment();
-    runs.forEach((run) => {
-      if (run.type === "equal") fragment.append(document.createTextNode(run.text));
-      else {
-        const mark = document.createElement("mark");
-        mark.className = run.type;
-        mark.textContent = run.text;
-        fragment.append(mark);
-      }
-    });
-    fragment.append(document.createTextNode("\n"));
-    layer.append(fragment);
-    layer.scrollTop = xmlInput(side).scrollTop;
-    layer.scrollLeft = xmlInput(side).scrollLeft;
+  function renderXmlIntegratedDiff(lineDiff) {
+    const leftText = xmlInput("left").value;
+    const rightText = xmlInput("right").value;
+    const leftLines = leftText.split(/\r?\n/);
+    const rightLines = rightText.split(/\r?\n/);
+
+    const leftGutter = $("xml-left-gutter");
+    const rightGutter = $("xml-right-gutter");
+    const leftBackdrop = $("xml-left-backdrop");
+    const rightBackdrop = $("xml-right-backdrop");
+
+    const hasLeft = leftText.trim().length > 0;
+    const hasRight = rightText.trim().length > 0;
+    const hasBoth = hasLeft && hasRight;
+
+    // Track which lines are removed or added based on lineDiff
+    const removedLineSet = new Set();
+    const addedLineSet = new Set();
+
+    if (hasBoth && lineDiff && lineDiff.ops) {
+      lineDiff.ops.forEach((op) => {
+        if (op.type === "removed" && op.leftLine != null) {
+          removedLineSet.add(op.leftLine);
+        } else if (op.type === "added" && op.rightLine != null) {
+          addedLineSet.add(op.rightLine);
+        }
+      });
+
+      const stats = lineDiff.stats;
+      setText("xml-stat-added", number.format(stats.addedLines));
+      setText("xml-stat-removed", number.format(stats.removedLines));
+      const totalDiffLines = stats.addedLines + stats.removedLines;
+      setText("xml-line-diff-badge", number.format(totalDiffLines) + " satır farkı");
+    } else {
+      setText("xml-stat-added", "0");
+      setText("xml-stat-removed", "0");
+      setText("xml-line-diff-badge", "0 satır farkı");
+    }
+
+    // Render Sol (Referans) Gutter & Backdrop
+    const leftGutterFrag = document.createDocumentFragment();
+    const leftBackdropFrag = document.createDocumentFragment();
+    const countLeft = leftText.length ? leftLines.length : 0;
+    for (let i = 1; i <= countLeft; i++) {
+      const isRemoved = removedLineSet.has(i);
+
+      const gLine = document.createElement("div");
+      gLine.className = "xml-gutter-line" + (isRemoved ? " diff-removed-line" : "");
+      
+      const numSpan = document.createElement("span");
+      numSpan.className = "gutter-num";
+      numSpan.textContent = i;
+
+      const signSpan = document.createElement("span");
+      signSpan.className = "gutter-sign";
+      signSpan.textContent = isRemoved ? "-" : "";
+
+      gLine.append(numSpan, signSpan);
+      leftGutterFrag.append(gLine);
+
+      const bLine = document.createElement("div");
+      bLine.className = "xml-backdrop-line" + (isRemoved ? " diff-removed-line" : "");
+      bLine.textContent = " ";
+      leftBackdropFrag.append(bLine);
+    }
+    leftGutter.replaceChildren(leftGutterFrag);
+    leftBackdrop.replaceChildren(leftBackdropFrag);
+
+    // Render Sağ (Yeni) Gutter & Backdrop
+    const rightGutterFrag = document.createDocumentFragment();
+    const rightBackdropFrag = document.createDocumentFragment();
+    const countRight = rightText.length ? rightLines.length : 0;
+    for (let i = 1; i <= countRight; i++) {
+      const isAdded = addedLineSet.has(i);
+
+      const gLine = document.createElement("div");
+      gLine.className = "xml-gutter-line" + (isAdded ? " diff-added-line" : "");
+
+      const numSpan = document.createElement("span");
+      numSpan.className = "gutter-num";
+      numSpan.textContent = i;
+
+      const signSpan = document.createElement("span");
+      signSpan.className = "gutter-sign";
+      signSpan.textContent = isAdded ? "+" : "";
+
+      gLine.append(numSpan, signSpan);
+      rightGutterFrag.append(gLine);
+
+      const bLine = document.createElement("div");
+      bLine.className = "xml-backdrop-line" + (isAdded ? " diff-added-line" : "");
+      bLine.textContent = " ";
+      rightBackdropFrag.append(bLine);
+    }
+    rightGutter.replaceChildren(rightGutterFrag);
+    rightBackdrop.replaceChildren(rightBackdropFrag);
+
+    syncXmlEditorScroll("left");
+    syncXmlEditorScroll("right");
+  }
+
+  function syncXmlEditorScroll(side) {
+    const input = xmlInput(side);
+    const gutter = $("xml-" + side + "-gutter");
+    const backdrop = $("xml-" + side + "-backdrop");
+    if (gutter) gutter.scrollTop = input.scrollTop;
+    if (backdrop) {
+      backdrop.scrollTop = input.scrollTop;
+      backdrop.scrollLeft = input.scrollLeft;
+    }
   }
 
   function renderXmlTable(differences) {
@@ -685,124 +780,6 @@
       fragment.append(row);
     });
     $("xml-diff-table-body").replaceChildren(fragment);
-  }
-
-  let xmlDiffMode = "split"; // "split" or "unified"
-
-  function renderXmlLineDiff(lineDiff) {
-    const emptyEl = $("xml-line-diff-empty");
-    const splitWrapper = $("xml-split-viewer-wrapper");
-    const unifiedWrapper = $("xml-unified-viewer-wrapper");
-    const splitTbody = $("xml-split-tbody");
-    const unifiedTbody = $("xml-unified-tbody");
-
-    const hasBoth = xmlInput("left").value.trim().length > 0 && xmlInput("right").value.trim().length > 0;
-
-    if (!hasBoth || !lineDiff || !lineDiff.ops.length) {
-      emptyEl.hidden = false;
-      splitWrapper.hidden = true;
-      unifiedWrapper.hidden = true;
-      setText("xml-stat-added", "0");
-      setText("xml-stat-removed", "0");
-      setText("xml-stat-total", "0");
-      setText("xml-line-diff-badge", "0 satır farkı");
-      return;
-    }
-
-    emptyEl.hidden = true;
-    splitWrapper.hidden = xmlDiffMode !== "split";
-    unifiedWrapper.hidden = xmlDiffMode !== "unified";
-
-    const stats = lineDiff.stats;
-    setText("xml-stat-added", number.format(stats.addedLines));
-    setText("xml-stat-removed", number.format(stats.removedLines));
-    setText("xml-stat-total", number.format(Math.max(stats.totalLinesLeft, stats.totalLinesRight)));
-    const totalDiffLines = stats.addedLines + stats.removedLines;
-    setText("xml-line-diff-badge", number.format(totalDiffLines) + " satır farkı");
-
-    // Render Split View (Toad / WinMerge tarzı yan yana)
-    const splitFrag = document.createDocumentFragment();
-    lineDiff.splitRows.forEach((row) => {
-      const tr = document.createElement("tr");
-      tr.className = "diff-row-" + row.type;
-
-      // Sol Taraf (Referans)
-      const tdLeftNum = document.createElement("td");
-      tdLeftNum.className = "col-num";
-      tdLeftNum.textContent = row.left ? row.left.line : "";
-
-      const tdLeftSign = document.createElement("td");
-      tdLeftSign.className = "col-sign";
-      tdLeftSign.textContent = row.left ? (row.type === "removed" || row.type === "changed" ? "-" : "") : "";
-
-      const tdLeftCode = document.createElement("td");
-      tdLeftCode.className = "col-code";
-      tdLeftCode.textContent = row.left ? row.left.text : "";
-
-      // Sağ Taraf (Yeni)
-      const tdRightNum = document.createElement("td");
-      tdRightNum.className = "col-num";
-      tdRightNum.textContent = row.right ? row.right.line : "";
-
-      const tdRightSign = document.createElement("td");
-      tdRightSign.className = "col-sign";
-      tdRightSign.textContent = row.right ? (row.type === "added" || row.type === "changed" ? "+" : "") : "";
-
-      const tdRightCode = document.createElement("td");
-      tdRightCode.className = "col-code";
-      tdRightCode.textContent = row.right ? row.right.text : "";
-
-      if (!row.left) {
-        tdLeftNum.classList.add("diff-row-empty");
-        tdLeftSign.classList.add("diff-row-empty");
-        tdLeftCode.classList.add("diff-row-empty");
-      }
-      if (!row.right) {
-        tdRightNum.classList.add("diff-row-empty");
-        tdRightSign.classList.add("diff-row-empty");
-        tdRightCode.classList.add("diff-row-empty");
-      }
-
-      tr.append(tdLeftNum, tdLeftSign, tdLeftCode, tdRightNum, tdRightSign, tdRightCode);
-      splitFrag.append(tr);
-    });
-    splitTbody.replaceChildren(splitFrag);
-
-    // Render Unified View (GitHub tarzı birleşik)
-    const unifiedFrag = document.createDocumentFragment();
-    lineDiff.ops.forEach((op) => {
-      const tr = document.createElement("tr");
-      tr.className = "diff-row-" + op.type;
-
-      const tdLeftNum = document.createElement("td");
-      tdLeftNum.className = "col-num";
-      tdLeftNum.textContent = op.leftLine != null ? op.leftLine : "";
-
-      const tdRightNum = document.createElement("td");
-      tdRightNum.className = "col-num";
-      tdRightNum.textContent = op.rightLine != null ? op.rightLine : "";
-
-      const tdSign = document.createElement("td");
-      tdSign.className = "col-sign";
-      tdSign.textContent = op.type === "added" ? "+" : op.type === "removed" ? "-" : " ";
-
-      const tdCode = document.createElement("td");
-      tdCode.className = "col-code";
-      tdCode.textContent = op.text;
-
-      tr.append(tdLeftNum, tdRightNum, tdSign, tdCode);
-      unifiedFrag.append(tr);
-    });
-    unifiedTbody.replaceChildren(unifiedFrag);
-  }
-
-  function setXmlDiffViewMode(mode) {
-    xmlDiffMode = mode;
-    $("xml-mode-split").classList.toggle("active", mode === "split");
-    $("xml-mode-unified").classList.toggle("active", mode === "unified");
-    if (currentXml && currentXml.lineDiff) {
-      renderXmlLineDiff(currentXml.lineDiff);
-    }
   }
 
   function analyzeXml() {
@@ -848,9 +825,7 @@
     $("xml-export-report").disabled = !(hasLeft || hasRight);
     $("xml-clear-all").disabled = !(hasLeft || hasRight);
     $("xml-swap-texts").disabled = !(hasLeft || hasRight);
-    renderXmlHighlights("left", hasBoth ? currentXml.textComparison.leftRuns : []);
-    renderXmlHighlights("right", hasBoth ? currentXml.textComparison.rightRuns : []);
-    renderXmlLineDiff(currentXml ? currentXml.lineDiff : null);
+    renderXmlIntegratedDiff(currentXml ? currentXml.lineDiff : null);
     renderXmlTable(bothValid ? currentXml.differences : []);
     $("xml-comparison-note").hidden = bothValid || !hasBoth;
     setText("xml-comparison-note", bothValid || !hasBoth ? "" : "XML parse hatasi duzeltildiginde yapisal fark listesi otomatik guncellenir.");
@@ -891,21 +866,39 @@
     });
   });
 
+  let isSyncingXmlScroll = false;
   sides.forEach((side) => {
-    xmlInput(side).addEventListener("input", () => {
+    const input = xmlInput(side);
+    const otherSide = side === "left" ? "right" : "left";
+
+    input.addEventListener("input", () => {
       clearTimeout(xmlTimer);
       xmlTimer = setTimeout(analyzeXml, 120);
     });
-    xmlInput(side).addEventListener("scroll", () => {
-      $("xml-" + side + "-highlight").scrollTop = xmlInput(side).scrollTop;
-      $("xml-" + side + "-highlight").scrollLeft = xmlInput(side).scrollLeft;
+
+    input.addEventListener("scroll", () => {
+      syncXmlEditorScroll(side);
+
+      // İki taraf arasında senkronize kaydırma (Toad tarzı)
+      if (!isSyncingXmlScroll) {
+        isSyncingXmlScroll = true;
+        const otherInput = xmlInput(otherSide);
+        if (otherInput) {
+          otherInput.scrollTop = input.scrollTop;
+          syncXmlEditorScroll(otherSide);
+        }
+        requestAnimationFrame(() => {
+          isSyncingXmlScroll = false;
+        });
+      }
     });
+
     $("xml-" + side + "-file").addEventListener("change", async (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
       xmlSetText(side, await file.text());
       analyzeXml();
-      notify((side === "left" ? "Sol" : "Sag") + " XML yuklendi.");
+      notify((side === "left" ? "Sol" : "Sağ") + " XML yüklendi.");
       event.target.value = "";
     });
   });
@@ -922,29 +915,23 @@
     xmlSetText("left", '<smsCampaign id="1001">\n  <name>Selfy Welcome</name>\n  <sender>TTMOBIL</sender>\n  <message lang="tr">Hos geldiniz. Paketiniz aktif.</message>\n  <validity days="30"/>\n</smsCampaign>');
     xmlSetText("right", '<smsCampaign id="1001">\n  <name>Selfy Welcome</name>\n  <sender>TTMOBIL</sender>\n  <message lang="tr">Hos geldiniz. Paketiniz aktif edildi.</message>\n  <validity days="45"/>\n  <channel>SMS</channel>\n</smsCampaign>');
     analyzeXml();
-    notify("Ornek XML dosyalari yuklendi.");
+    notify("Örnek XML dosyaları yüklendi.");
   });
   $("xml-clear-all").addEventListener("click", () => {
     sides.forEach((side) => xmlSetText(side, ""));
     analyzeXml();
     xmlInput("left").focus();
-    notify("XML alanlari temizlendi.");
+    notify("XML alanları temizlendi.");
   });
   $("xml-swap-texts").addEventListener("click", () => {
     const left = xmlInput("left").value;
     xmlSetText("left", xmlInput("right").value);
     xmlSetText("right", left);
     analyzeXml();
-    notify("Sol ve sag XML yer degistirdi.");
+    notify("Sol ve sağ XML yer değiştirdi.");
   });
   $("xml-export-report").addEventListener("click", exportXmlReport);
 
-  $("xml-mode-split").addEventListener("click", () => {
-    setXmlDiffViewMode("split");
-  });
-  $("xml-mode-unified").addEventListener("click", () => {
-    setXmlDiffViewMode("unified");
-  });
   $("xml-format-canonical-btn").addEventListener("click", () => {
     if (currentXml && currentXml.left.ok && currentXml.right.ok) {
       xmlSetText("left", currentXml.leftCanonical);

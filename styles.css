@@ -239,44 +239,145 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.5; }
 .xml-row-removed td { background: #fefbfc; }
 .xml-row-changed td { background: #fffdf8; }
 
-/* Toad / GitHub Satır Satır Diff Görüntüleyici Stilleri */
-.xml-diff-card { border: 1px solid var(--border); border-radius: 6px; background: #fff; overflow: hidden; margin-top: 10px; }
-.xml-diff-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 10px 16px; background: #f8fafb; border-bottom: 1px solid var(--border); }
-.xml-diff-stats { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.xml-stat-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: #506169; padding: 3px 8px; border-radius: 4px; background: #eaeff1; }
-.xml-stat-chip.added { background: #e8f5ec; color: #1e6b45; }
-.xml-stat-chip.removed { background: #fde8ea; color: #a12b37; }
-.xml-stat-chip .stat-symbol { font-weight: 700; font-family: monospace; }
-.xml-view-modes { display: inline-flex; gap: 4px; background: #e9edef; padding: 3px; border-radius: 5px; }
+/* Entegre Toad / GitHub Tarzı XML Editör Stilleri */
+.xml-comparison-section .xml-editors-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  position: relative;
+}
 
-.xml-diff-viewer-wrapper { max-height: 520px; overflow: auto; scrollbar-width: thin; background: #fff; }
-.xml-line-diff-table { width: 100%; border-collapse: collapse; font-family: Consolas, "Cascadia Code", "Courier New", monospace; font-size: 11.5px; line-height: 1.55; table-layout: fixed; }
-.xml-line-diff-table thead { position: sticky; top: 0; background: #f0f3f5; z-index: 2; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
-.xml-line-diff-table th { padding: 8px 10px; font-size: 10.5px; font-weight: 600; color: #586972; border-bottom: 1px solid #d5dfe2; text-align: left; }
-.xml-line-diff-table td { padding: 2px 8px; vertical-align: top; border-bottom: 1px solid #f1f4f6; white-space: pre-wrap; word-break: break-all; }
+.xml-integrated-surface {
+  position: relative;
+  height: clamp(380px, 50vh, 600px);
+  background: #fff;
+  border-top: 1px solid #eef2f4;
+  overflow: hidden;
+  font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 20px;
+}
+/* Göz hizası tek çizgi - sahte ::before 1 numarasını kaldırıyoruz */
+.xml-integrated-surface::before {
+  display: none !important;
+}
 
-/* Sütun Genişlikleri */
-.xml-line-diff-table .col-num { width: 44px; text-align: right; user-select: none; color: #94a3a8; background: #fafbfc; border-right: 1px solid #ebf0f2; font-size: 10.5px; padding-right: 6px; }
-.xml-line-diff-table .col-sign { width: 22px; text-align: center; user-select: none; font-weight: 700; border-right: 1px solid rgba(0,0,0,0.03); }
-.xml-line-diff-table .col-code { font-family: Consolas, "Cascadia Code", monospace; }
+/* Sol Gutter: Satır Numarası ve + / - İşareti */
+.xml-gutter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 58px;
+  background: #f7f9fa;
+  border-right: 1px solid #dbe2e5;
+  user-select: none;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
 
-/* Satır Renkleri (GitHub / Toad Tarzı) */
-.diff-row-added td { background: #e6ffed; color: #155724; }
-.diff-row-added .col-num { background: #ccffd8; color: #155724; border-right-color: #b4f5c5; }
-.diff-row-added .col-sign { color: #1a7f37; font-weight: 700; }
+.xml-gutter-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+  padding: 0 6px 0 6px;
+  font-size: 11px;
+  color: #8b9aa1;
+  box-sizing: border-box;
+}
 
-.diff-row-removed td { background: #ffeef0; color: #721c24; }
-.diff-row-removed .col-num { background: #ffdce0; color: #721c24; border-right-color: #f7c3c8; }
-.diff-row-removed .col-sign { color: #cf222e; font-weight: 700; }
+.xml-gutter-line .gutter-num {
+  width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
-.diff-row-empty td { background: #fafbfc; }
-.diff-row-empty .col-num { background: #f3f5f6; }
+.xml-gutter-line .gutter-sign {
+  width: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+}
 
-.diff-row-equal:hover td, .diff-row-added:hover td, .diff-row-removed:hover td { filter: brightness(0.97); }
+/* Diff Backdrop: Satır arka plan renklendirmesi (+ yeşil, - kırmızı) */
+.xml-diff-backdrop {
+  position: absolute;
+  top: 0;
+  left: 58px;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  background: transparent;
+}
 
-/* Split Modu Sütun Sınırları */
-.split-table th:nth-child(3) { border-right: 2px solid #d1dbdf; }
-.split-table td:nth-child(3) { border-right: 2px solid #d1dbdf; }
+.xml-backdrop-line {
+  height: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: pre;
+}
+
+/* Doğrudan Yazılabilir Textarea */
+.xml-integrated-textarea {
+  position: absolute;
+  top: 0;
+  left: 58px;
+  right: 0;
+  bottom: 0;
+  width: calc(100% - 58px);
+  height: 100%;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #29353c;
+  caret-color: var(--primary);
+  font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd4d8 transparent;
+  tab-size: 2;
+  z-index: 3;
+}
+
+.xml-integrated-textarea::placeholder {
+  color: #8fa0a8;
+  opacity: 1;
+}
+
+/* Diff Satır Renkleri (GitHub / Toad Tarzı) */
+.diff-removed-line {
+  background-color: #ffeef0 !important;
+  color: #b31d28 !important;
+}
+.diff-removed-line.xml-gutter-line {
+  background-color: #ffdce0 !important;
+  border-right-color: #fca5a5 !important;
+}
+.diff-removed-line .gutter-sign {
+  color: #cf222e;
+}
+
+.diff-added-line {
+  background-color: #e6ffed !important;
+  color: #1a7f37 !important;
+}
+.diff-added-line.xml-gutter-line {
+  background-color: #ccffd8 !important;
+  border-right-color: #86efac !important;
+}
+.diff-added-line .gutter-sign {
+  color: #1a7f37;
+}
 
 .converter-container { display: flex; flex-direction: column; gap: 20px; margin-bottom: 28px; }
 .converter-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 0 0 18px; border-bottom: 1px solid var(--border); }
