@@ -259,8 +259,9 @@
       });
     }
 
-    // Line diff based on canonical formatted XML (or raw if parsing failed)
-    const lineDiff = diffLines(leftCanonical, rightCanonical);
+    // Line diff based directly on the actual user-entered text (leftText, rightText)
+    // so that line numbers, empty lines, and positions match the textarea exactly!
+    const lineDiff = diffLines(leftText, rightText);
 
     return {
       left: leftParsed,
