@@ -687,6 +687,124 @@
     $("xml-diff-table-body").replaceChildren(fragment);
   }
 
+  let xmlDiffMode = "split"; // "split" or "unified"
+
+  function renderXmlLineDiff(lineDiff) {
+    const emptyEl = $("xml-line-diff-empty");
+    const splitWrapper = $("xml-split-viewer-wrapper");
+    const unifiedWrapper = $("xml-unified-viewer-wrapper");
+    const splitTbody = $("xml-split-tbody");
+    const unifiedTbody = $("xml-unified-tbody");
+
+    const hasBoth = xmlInput("left").value.trim().length > 0 && xmlInput("right").value.trim().length > 0;
+
+    if (!hasBoth || !lineDiff || !lineDiff.ops.length) {
+      emptyEl.hidden = false;
+      splitWrapper.hidden = true;
+      unifiedWrapper.hidden = true;
+      setText("xml-stat-added", "0");
+      setText("xml-stat-removed", "0");
+      setText("xml-stat-total", "0");
+      setText("xml-line-diff-badge", "0 satır farkı");
+      return;
+    }
+
+    emptyEl.hidden = true;
+    splitWrapper.hidden = xmlDiffMode !== "split";
+    unifiedWrapper.hidden = xmlDiffMode !== "unified";
+
+    const stats = lineDiff.stats;
+    setText("xml-stat-added", number.format(stats.addedLines));
+    setText("xml-stat-removed", number.format(stats.removedLines));
+    setText("xml-stat-total", number.format(Math.max(stats.totalLinesLeft, stats.totalLinesRight)));
+    const totalDiffLines = stats.addedLines + stats.removedLines;
+    setText("xml-line-diff-badge", number.format(totalDiffLines) + " satır farkı");
+
+    // Render Split View (Toad / WinMerge tarzı yan yana)
+    const splitFrag = document.createDocumentFragment();
+    lineDiff.splitRows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.className = "diff-row-" + row.type;
+
+      // Sol Taraf (Referans)
+      const tdLeftNum = document.createElement("td");
+      tdLeftNum.className = "col-num";
+      tdLeftNum.textContent = row.left ? row.left.line : "";
+
+      const tdLeftSign = document.createElement("td");
+      tdLeftSign.className = "col-sign";
+      tdLeftSign.textContent = row.left ? (row.type === "removed" || row.type === "changed" ? "-" : "") : "";
+
+      const tdLeftCode = document.createElement("td");
+      tdLeftCode.className = "col-code";
+      tdLeftCode.textContent = row.left ? row.left.text : "";
+
+      // Sağ Taraf (Yeni)
+      const tdRightNum = document.createElement("td");
+      tdRightNum.className = "col-num";
+      tdRightNum.textContent = row.right ? row.right.line : "";
+
+      const tdRightSign = document.createElement("td");
+      tdRightSign.className = "col-sign";
+      tdRightSign.textContent = row.right ? (row.type === "added" || row.type === "changed" ? "+" : "") : "";
+
+      const tdRightCode = document.createElement("td");
+      tdRightCode.className = "col-code";
+      tdRightCode.textContent = row.right ? row.right.text : "";
+
+      if (!row.left) {
+        tdLeftNum.classList.add("diff-row-empty");
+        tdLeftSign.classList.add("diff-row-empty");
+        tdLeftCode.classList.add("diff-row-empty");
+      }
+      if (!row.right) {
+        tdRightNum.classList.add("diff-row-empty");
+        tdRightSign.classList.add("diff-row-empty");
+        tdRightCode.classList.add("diff-row-empty");
+      }
+
+      tr.append(tdLeftNum, tdLeftSign, tdLeftCode, tdRightNum, tdRightSign, tdRightCode);
+      splitFrag.append(tr);
+    });
+    splitTbody.replaceChildren(splitFrag);
+
+    // Render Unified View (GitHub tarzı birleşik)
+    const unifiedFrag = document.createDocumentFragment();
+    lineDiff.ops.forEach((op) => {
+      const tr = document.createElement("tr");
+      tr.className = "diff-row-" + op.type;
+
+      const tdLeftNum = document.createElement("td");
+      tdLeftNum.className = "col-num";
+      tdLeftNum.textContent = op.leftLine != null ? op.leftLine : "";
+
+      const tdRightNum = document.createElement("td");
+      tdRightNum.className = "col-num";
+      tdRightNum.textContent = op.rightLine != null ? op.rightLine : "";
+
+      const tdSign = document.createElement("td");
+      tdSign.className = "col-sign";
+      tdSign.textContent = op.type === "added" ? "+" : op.type === "removed" ? "-" : " ";
+
+      const tdCode = document.createElement("td");
+      tdCode.className = "col-code";
+      tdCode.textContent = op.text;
+
+      tr.append(tdLeftNum, tdRightNum, tdSign, tdCode);
+      unifiedFrag.append(tr);
+    });
+    unifiedTbody.replaceChildren(unifiedFrag);
+  }
+
+  function setXmlDiffViewMode(mode) {
+    xmlDiffMode = mode;
+    $("xml-mode-split").classList.toggle("active", mode === "split");
+    $("xml-mode-unified").classList.toggle("active", mode === "unified");
+    if (currentXml && currentXml.lineDiff) {
+      renderXmlLineDiff(currentXml.lineDiff);
+    }
+  }
+
   function analyzeXml() {
     clearTimeout(xmlTimer);
     const leftText = xmlInput("left").value;
@@ -732,6 +850,7 @@
     $("xml-swap-texts").disabled = !(hasLeft || hasRight);
     renderXmlHighlights("left", hasBoth ? currentXml.textComparison.leftRuns : []);
     renderXmlHighlights("right", hasBoth ? currentXml.textComparison.rightRuns : []);
+    renderXmlLineDiff(currentXml ? currentXml.lineDiff : null);
     renderXmlTable(bothValid ? currentXml.differences : []);
     $("xml-comparison-note").hidden = bothValid || !hasBoth;
     setText("xml-comparison-note", bothValid || !hasBoth ? "" : "XML parse hatasi duzeltildiginde yapisal fark listesi otomatik guncellenir.");
@@ -819,6 +938,23 @@
     notify("Sol ve sag XML yer degistirdi.");
   });
   $("xml-export-report").addEventListener("click", exportXmlReport);
+
+  $("xml-mode-split").addEventListener("click", () => {
+    setXmlDiffViewMode("split");
+  });
+  $("xml-mode-unified").addEventListener("click", () => {
+    setXmlDiffViewMode("unified");
+  });
+  $("xml-format-canonical-btn").addEventListener("click", () => {
+    if (currentXml && currentXml.left.ok && currentXml.right.ok) {
+      xmlSetText("left", currentXml.leftCanonical);
+      xmlSetText("right", currentXml.rightCanonical);
+      analyzeXml();
+      notify("XML metinleri standart (girintili) formata dönüştürüldü.");
+    } else {
+      notify("Standart format için her iki XML'in de geçerli olması gerekir.");
+    }
+  });
 
   $("fee-calculator").addEventListener("submit", (event) => {
     event.preventDefault();

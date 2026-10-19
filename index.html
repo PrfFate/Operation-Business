@@ -117,7 +117,83 @@
             <div class="comparison-note" id="xml-comparison-note" hidden></div>
           </section>
 
-          <section class="analysis-section" aria-labelledby="xml-differences-heading"><div class="section-heading"><div class="section-title"><h2 id="xml-differences-heading">Fark listesi</h2><span id="xml-issue-count" class="count-badge">0</span></div></div><div class="analysis-card"><div class="table-wrapper xml-table-wrapper"><div id="xml-analysis-empty" class="analysis-empty"><span class="empty-icon"><svg class="icon"><use href="#i-list"/></svg></span><strong id="xml-empty-title">XML farklari burada listelenir.</strong><p id="xml-empty-detail">Iki gecerli XML eklendiginde degisen node, attribute ve text degerleri gorunur.</p></div><table id="xml-diff-table" class="character-table xml-diff-table" hidden><thead><tr><th>DURUM</th><th>YOL</th><th>TUR</th><th>SOL DEGER</th><th>SAG DEGER</th></tr></thead><tbody id="xml-diff-table-body"></tbody></table></div><div class="analysis-footnote"><svg class="icon small"><use href="#i-info"/></svg><span>XML dosyalari tarayicinizda okunur. Attribute sirasi normalize edilir; bos text node'lari karsilastirma disinda tutulur.</span></div></div></section>
+          <!-- Görsel Toad / GitHub Satır Satır Diff Alanı -->
+          <section class="analysis-section" id="xml-diff-viewer-section" aria-labelledby="xml-diff-viewer-heading">
+            <div class="section-heading">
+              <div class="section-title">
+                <h2 id="xml-diff-viewer-heading">Görsel Satır Karşılaştırması</h2>
+                <span id="xml-line-diff-badge" class="count-badge">0 satır farkı</span>
+              </div>
+              <div class="xml-view-modes" role="group" aria-label="Görünüm modu">
+                <button type="button" id="xml-mode-split" class="converter-toggle-btn active" title="Yan yana iki sütun (Toad / WinMerge tarzı)">
+                  <svg class="icon small" style="width:12px;height:12px;margin-right:4px;"><use href="#i-copy"/></svg>Yan Yana (Toad)
+                </button>
+                <button type="button" id="xml-mode-unified" class="converter-toggle-btn" title="Tek sütunda birleşik (GitHub commit tarzı)">
+                  <svg class="icon small" style="width:12px;height:12px;margin-right:4px;"><use href="#i-list"/></svg>Birleşik (GitHub)
+                </button>
+              </div>
+            </div>
+
+            <div class="analysis-card xml-diff-card">
+              <div class="xml-diff-toolbar">
+                <div class="xml-diff-stats">
+                  <span class="xml-stat-chip added"><span class="stat-symbol">+</span><strong id="xml-stat-added">0</strong> eklenen satır</span>
+                  <span class="xml-stat-chip removed"><span class="stat-symbol">-</span><strong id="xml-stat-removed">0</strong> silinen satır</span>
+                  <span class="xml-stat-chip total"><strong id="xml-stat-total">0</strong> toplam satır</span>
+                </div>
+                <div class="xml-diff-actions">
+                  <button type="button" id="xml-format-canonical-btn" class="button button-secondary" style="height:28px;padding:0 10px;font-size:11px;" title="XML'leri standart girintili (canonical) formata göre karşılaştır">
+                    <svg class="icon small" style="width:12px;height:12px;"><use href="#i-code"/></svg> Standart Format
+                  </button>
+                </div>
+              </div>
+
+              <div id="xml-line-diff-empty" class="analysis-empty">
+                <span class="empty-icon"><svg class="icon"><use href="#i-code"/></svg></span>
+                <strong>Görsel karşılaştırma bekleniyor</strong>
+                <p>İki XML girdiğinizde yeşil (+) ve kırmızı (-) satır renklendirmesiyle tam kod farkı burada listelenir.</p>
+              </div>
+
+              <!-- Split (Yan Yana) Tablo Görünümü -->
+              <div id="xml-split-viewer-wrapper" class="xml-diff-viewer-wrapper split-mode" hidden>
+                <table class="xml-line-diff-table split-table">
+                  <thead>
+                    <tr>
+                      <th class="col-num">L#</th>
+                      <th class="col-sign"></th>
+                      <th class="col-code">Sol XML (Referans)</th>
+                      <th class="col-num">R#</th>
+                      <th class="col-sign"></th>
+                      <th class="col-code">Sağ XML (Yeni)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="xml-split-tbody"></tbody>
+                </table>
+              </div>
+
+              <!-- Unified (Birleşik GitHub) Tablo Görünümü -->
+              <div id="xml-unified-viewer-wrapper" class="xml-diff-viewer-wrapper unified-mode" hidden>
+                <table class="xml-line-diff-table unified-table">
+                  <thead>
+                    <tr>
+                      <th class="col-num">L#</th>
+                      <th class="col-num">R#</th>
+                      <th class="col-sign"></th>
+                      <th class="col-code">İçerik</th>
+                    </tr>
+                  </thead>
+                  <tbody id="xml-unified-tbody"></tbody>
+                </table>
+              </div>
+
+              <div class="analysis-footnote">
+                <svg class="icon small"><use href="#i-info"/></svg>
+                <span><b>Kırmızı (-)</b> silinen/değişen eski satırları, <b>Yeşil (+)</b> yeni eklenen satırları gösterir. Satır numaraları orijinal dosya hizasını belirtir.</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="analysis-section" aria-labelledby="xml-differences-heading"><div class="section-heading"><div class="section-title"><h2 id="xml-differences-heading">Fark listesi (XPath)</h2><span id="xml-issue-count" class="count-badge">0</span></div></div><div class="analysis-card"><div class="table-wrapper xml-table-wrapper"><div id="xml-analysis-empty" class="analysis-empty"><span class="empty-icon"><svg class="icon"><use href="#i-list"/></svg></span><strong id="xml-empty-title">XML farklari burada listelenir.</strong><p id="xml-empty-detail">Iki gecerli XML eklendiginde degisen node, attribute ve text degerleri gorunur.</p></div><table id="xml-diff-table" class="character-table xml-diff-table" hidden><thead><tr><th>DURUM</th><th>YOL</th><th>TUR</th><th>SOL DEGER</th><th>SAG DEGER</th></tr></thead><tbody id="xml-diff-table-body"></tbody></table></div><div class="analysis-footnote"><svg class="icon small"><use href="#i-info"/></svg><span>XML dosyalari tarayicinizda okunur. Attribute sirasi normalize edilir; bos text node'lari karsilastirma disinda tutulur.</span></div></div></section>
         </section>
 
         <section id="converter-view" class="workspace-view" data-view="converter" hidden>

@@ -120,6 +120,124 @@
     return entries;
   }
 
+  function diffLines(leftText, rightText) {
+    const leftLines = asText(leftText).split(/\r?\n/);
+    const rightLines = asText(rightText).split(/\r?\n/);
+
+    // Bounded Myers diff on array of lines
+    const N = leftLines.length;
+    const M = rightLines.length;
+    const max = N + M;
+    const offset = max;
+    const v = new Int32Array(2 * max + 1);
+    const trace = [];
+
+    let reached = false;
+    for (let d = 0; d <= max; d++) {
+      trace.push(v.slice());
+      for (let k = -d; k <= d; k += 2) {
+        let x;
+        if (k === -d || (k !== d && v[offset + k - 1] < v[offset + k + 1])) {
+          x = v[offset + k + 1];
+        } else {
+          x = v[offset + k - 1] + 1;
+        }
+        let y = x - k;
+        while (x < N && y < M && leftLines[x] === rightLines[y]) {
+          x++;
+          y++;
+        }
+        v[offset + k] = x;
+        if (x >= N && y >= M) {
+          reached = true;
+          break;
+        }
+      }
+      if (reached) break;
+    }
+
+    // Backtrack to find edit script
+    let x = N;
+    let y = M;
+    const ops = [];
+    for (let d = trace.length - 1; d >= 0; d--) {
+      const vec = trace[d];
+      const k = x - y;
+      const prevK = (k === -d || (k !== d && vec[offset + k - 1] < vec[offset + k + 1])) ? k + 1 : k - 1;
+      const prevX = vec[offset + prevK];
+      const prevY = prevX - prevK;
+      while (x > prevX && y > prevY) {
+        ops.push({ type: "equal", leftLine: x, rightLine: y, text: leftLines[x - 1] });
+        x--;
+        y--;
+      }
+      if (d === 0) break;
+      if (x === prevX) {
+        ops.push({ type: "added", leftLine: null, rightLine: y, text: rightLines[y - 1] });
+        y--;
+      } else {
+        ops.push({ type: "removed", leftLine: x, rightLine: null, text: leftLines[x - 1] });
+        x--;
+      }
+    }
+    ops.reverse();
+
+    // Build side-by-side (split) rows
+    const splitRows = [];
+    let i = 0;
+    while (i < ops.length) {
+      const op = ops[i];
+      if (op.type === "equal") {
+        splitRows.push({
+          type: "equal",
+          left: { line: op.leftLine, text: op.text },
+          right: { line: op.rightLine, text: op.text }
+        });
+        i++;
+      } else if (op.type === "removed") {
+        // Collect consecutive removed and added
+        const removed = [];
+        const added = [];
+        while (i < ops.length && ops[i].type === "removed") {
+          removed.push(ops[i]);
+          i++;
+        }
+        while (i < ops.length && ops[i].type === "added") {
+          added.push(ops[i]);
+          i++;
+        }
+        const maxLen = Math.max(removed.length, added.length);
+        for (let j = 0; j < maxLen; j++) {
+          const r = removed[j];
+          const a = added[j];
+          splitRows.push({
+            type: (r && a) ? "changed" : (r ? "removed" : "added"),
+            left: r ? { line: r.leftLine, text: r.text } : null,
+            right: a ? { line: a.rightLine, text: a.text } : null
+          });
+        }
+      } else if (op.type === "added") {
+        splitRows.push({
+          type: "added",
+          left: null,
+          right: { line: op.rightLine, text: op.text }
+        });
+        i++;
+      }
+    }
+
+    return {
+      ops: ops,
+      splitRows: splitRows,
+      stats: {
+        totalLinesLeft: N,
+        totalLinesRight: M,
+        addedLines: ops.filter(function (o) { return o.type === "added"; }).length,
+        removedLines: ops.filter(function (o) { return o.type === "removed"; }).length
+      }
+    };
+  }
+
   function compare(leftText, rightText) {
     const leftParsed = parse(leftText);
     const rightParsed = parse(rightText);
@@ -141,15 +259,19 @@
       });
     }
 
+    // Line diff based on canonical formatted XML (or raw if parsing failed)
+    const lineDiff = diffLines(leftCanonical, rightCanonical);
+
     return {
       left: leftParsed,
       right: rightParsed,
       leftCanonical: leftCanonical,
       rightCanonical: rightCanonical,
       textComparison: textComparison,
-      differences: differences
+      differences: differences,
+      lineDiff: lineDiff
     };
   }
 
-  root.XmlEngine = Object.freeze({ parse: parse, compare: compare, canonical: canonical });
+  root.XmlEngine = Object.freeze({ parse: parse, compare: compare, canonical: canonical, diffLines: diffLines });
 })(typeof globalThis !== "undefined" ? globalThis : window);
