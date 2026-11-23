@@ -545,6 +545,7 @@
       else if (view === "converter") crumb.textContent = "Ölçü Birimi Dönüştürücü";
       else if (view === "fee") crumb.textContent = "Ücret Hesaplama";
       else if (view === "sql") crumb.textContent = "SQL Liste Dönüştürücü";
+      else if (view === "phone") crumb.textContent = "Numara Biçimlendirici";
       else crumb.textContent = "SMS Karşılaştırma";
       document.title = crumb.textContent + " · Operasyon Merkezi";
     }
@@ -1105,10 +1106,82 @@
   $("sql-copy-btn").addEventListener("click", copySqlOutput);
   $("sql-copy-text-btn").addEventListener("click", copySqlOutput);
 
-  const initialView = location.hash === "#xml-view" ? "xml" : location.hash === "#converter-view" ? "converter" : location.hash === "#fee-view" ? "fee" : location.hash === "#sql-view" ? "sql" : "sms";
+  // --- Phone Number Formatter ---
+  function convertPhone() {
+    const input = $("phone-input");
+    const output = $("phone-output");
+    if (!input || !output || !window.PhoneEngine) return;
+    const text = input.value;
+    const result = window.PhoneEngine.process(text, {
+      mode: $("phone-mode").value,
+      separator: $("phone-sep").value,
+      distinct: $("phone-distinct").checked
+    });
+    output.value = result.outputText;
+    setText("phone-total-count", number.format(result.totalCount));
+    setText("phone-total-detail", result.totalCount ? "Numara bulundu" : "Veri bekleniyor");
+    setText("phone-output-count", number.format(result.outputCount));
+    setText("phone-output-detail", "Dönüştürülen numara");
+    setText("phone-unique-count", number.format(result.uniqueCount));
+    setText("phone-dup-detail", number.format(result.duplicateCount) + " mükerrer");
+    setText("phone-input-count", number.format(result.totalCount));
+    setText("phone-output-chars", number.format(result.outputText.length));
+    const badge = $("phone-input-badge");
+    badge.className = "encoding-badge" + (result.totalCount ? " good" : "");
+    badge.textContent = result.totalCount ? number.format(result.totalCount) + " numara" : "Veri bekleniyor";
+    $("phone-input-clear-btn").disabled = !text;
+    $("phone-copy-btn").disabled = !result.outputText;
+    $("phone-copy-text-btn").disabled = !result.outputText;
+  }
+
+  $("phone-input").addEventListener("input", convertPhone);
+  $("phone-input").addEventListener("paste", () => setTimeout(convertPhone, 0));
+  ["phone-mode", "phone-sep", "phone-distinct"].forEach((id) => $(id).addEventListener("change", convertPhone));
+  $("phone-load-example").addEventListener("click", () => {
+    $("phone-input").value = "905016612132,905057681412,905016258769";
+    convertPhone();
+    notify("Örnek numaralar yüklendi.");
+  });
+  function clearPhone() {
+    $("phone-input").value = "";
+    convertPhone();
+  }
+  $("phone-clear").addEventListener("click", () => { clearPhone(); $("phone-input").focus(); });
+  $("phone-input-clear-btn").addEventListener("click", () => { clearPhone(); $("phone-input").focus(); });
+  $("phone-paste-btn").addEventListener("click", async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error("clipboard-unavailable");
+      const clipboard = await navigator.clipboard.readText();
+      if (!clipboard) { notify("Panoda yapıştırılacak bir metin bulunamadı."); return; }
+      $("phone-input").value = clipboard;
+      convertPhone();
+      $("phone-input").focus();
+    } catch (_) {
+      $("phone-input").focus();
+      notify("Panoyu yapıştırmak için Ctrl+V veya ⌘V kullanın.");
+    }
+  });
+  async function copyPhoneOutput() {
+    const output = $("phone-output").value;
+    if (!output) return;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("clipboard-unavailable");
+      await navigator.clipboard.writeText(output);
+      notify("Numaralar panoya kopyalandı.");
+    } catch (_) {
+      $("phone-output").focus();
+      $("phone-output").select();
+      notify("Çıktı seçildi. Kopyalamak için Ctrl+C veya ⌘C kullanın.");
+    }
+  }
+  $("phone-copy-btn").addEventListener("click", copyPhoneOutput);
+  $("phone-copy-text-btn").addEventListener("click", copyPhoneOutput);
+
+  const initialView = location.hash === "#xml-view" ? "xml" : location.hash === "#converter-view" ? "converter" : location.hash === "#fee-view" ? "fee" : location.hash === "#sql-view" ? "sql" : location.hash === "#phone-view" ? "phone" : "sms";
   setView(initialView);
   analyze();
   analyzeXml();
   calculateFee();
   convertSql();
+  convertPhone();
 })();
